@@ -9,32 +9,27 @@ import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
-type Area struct {
-	Cols int
-	Rows int
-}
-
 type Game struct {
 	screen   *bufio.Writer
-	area     Area
-	snake    *entities.Snake
-	bricks   []*entities.Brick
-	bounders []engine.Bounder
+	area     *engine.Area
 	Controls chan terminal.Control
+
+	snake  *entities.Snake
+	bricks []*entities.Brick
+	food   *entities.Food
 }
 
 func NewGame(buf *bufio.Writer) *Game {
-	area := Area{Cols: 40, Rows: 20}
-	cols, rows := 40, 20
+	area := engine.NewArea(40, 20)
 	bricks := make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4)
 
 	game := &Game{
 		screen:   buf,
-		area:     Area{Cols: 40, Rows: 20},
-		snake:    entities.NewSnake(8, cols/2, rows/2),
+		area:     area,
+		snake:    entities.NewSnake(8, area.Cols/2, area.Rows/2),
 		bricks:   bricks,
 		Controls: make(chan terminal.Control, 2),
-		bounders: make([]engine.Bounder, 0),
+		// food:     entities.NewFood(),
 	}
 
 	game.addBricks()
@@ -54,16 +49,14 @@ func (g *Game) addBricks() {
 }
 
 func (g *Game) Update() {
-	g.bounders = g.bounders[:0]
+	g.area.Bounders = g.area.Bounders[:0]
 	for _, b := range g.bricks {
-		g.bounders = append(g.bounders, b)
+		g.area.Bounders = append(g.area.Bounders, b)
 	}
 	for _, n := range g.snake.Nodes {
-		g.bounders = append(g.bounders, n)
+		g.area.Bounders = append(g.area.Bounders, n)
 	}
-
-	engine.RenderAll(g.screen, g.bounders)
-
+	g.area.Render(g.screen)
 	g.screen.Flush()
 }
 

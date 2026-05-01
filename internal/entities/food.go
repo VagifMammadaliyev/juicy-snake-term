@@ -5,16 +5,16 @@ import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
-type Brick struct {
+type Food struct {
 	engine.Cell
 }
 
-func NewBrick(x, y int) *Brick {
-	return &Brick{
-		Cell: engine.NewCell(x, y, terminal.Red),
+func NewFood(x, y int) *Food {
+	return &Food{
+		Cell: engine.NewCell(x, y, terminal.Magenta),
 	}
 }
 
-func (b *Brick) Bounds() engine.Cell {
-	return b.Cell
+func (f *Food) Bounds() engine.Cell {
+	return f.Cell
 }

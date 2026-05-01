@@ -15,15 +15,7 @@ func (sn *SnakeNode) Bounds() engine.Cell {
 
 func newSnakeNode(x, y int) *SnakeNode {
 	return &SnakeNode{
-		Cell: engine.Cell{
-			X:       x,
-			Y:       y,
-			Height:  DefaultHeight,
-			Width:   DefaultWidth,
-			FgColor: terminal.Green,
-			BgColor: terminal.Green,
-			Symbol:  ' ',
-		},
+		Cell: engine.NewCell(x, y, terminal.Green),
 	}
 }
 

@@ -1,4 +1,4 @@
-package entities
+package engine
 
 const (
 	DefaultHeight int = 1
