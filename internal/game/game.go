@@ -1,0 +1,89 @@
+package game
+
+import (
+	"bufio"
+	"time"
+
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/entities"
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
+)
+
+type Area struct {
+	Cols int
+	Rows int
+}
+
+type Game struct {
+	screen   *bufio.Writer
+	area     Area
+	snake    *entities.Snake
+	bricks   []*entities.Brick
+	bounders []engine.Bounder
+	Controls chan terminal.Control
+}
+
+func NewGame(buf *bufio.Writer) *Game {
+	area := Area{Cols: 40, Rows: 20}
+	cols, rows := 40, 20
+	bricks := make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4)
+
+	game := &Game{
+		screen:   buf,
+		area:     Area{Cols: 40, Rows: 20},
+		snake:    entities.NewSnake(8, cols/2, rows/2),
+		bricks:   bricks,
+		Controls: make(chan terminal.Control, 2),
+		bounders: make([]engine.Bounder, 0),
+	}
+
+	game.addBricks()
+	return game
+}
+
+func (g *Game) addBricks() {
+	for x := range g.area.Cols {
+		g.bricks = append(g.bricks, entities.NewBrick(x, 0))
+		g.bricks = append(g.bricks, entities.NewBrick(x, g.area.Rows-1))
+	}
+
+	for y := range g.area.Rows - 2 {
+		g.bricks = append(g.bricks, entities.NewBrick(0, y+1))
+		g.bricks = append(g.bricks, entities.NewBrick(g.area.Cols-1, y+1))
+	}
+}
+
+func (g *Game) Update() {
+	g.bounders = g.bounders[:0]
+	for _, b := range g.bricks {
+		g.bounders = append(g.bounders, b)
+	}
+	for _, n := range g.snake.Nodes {
+		g.bounders = append(g.bounders, n)
+	}
+
+	engine.RenderAll(g.screen, g.bounders)
+
+	g.screen.Flush()
+}
+
+func (g *Game) Run() {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+
+		case <-ticker.C:
+			g.snake.Move()
+			g.Update()
+
+		case control := <-g.Controls:
+			if control == terminal.Quit {
+				return
+			}
+
+			g.snake.SetDirection(entities.SnakeDirection(control))
+		}
+	}
+}
