@@ -20,7 +20,7 @@ type Game struct {
 }
 
 func NewGame(buf *bufio.Writer) *Game {
-	area := engine.NewArea(40, 20)
+	area := engine.NewArea(40, 40)
 	bricks := make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4)
 
 	game := &Game{

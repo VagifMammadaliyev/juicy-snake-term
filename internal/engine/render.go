@@ -7,30 +7,16 @@ import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
-type Bounder interface {
-	Bounds() Cell
-}
-
-type Area struct {
-	Point
-	Cols     int
-	Rows     int
-	Bounders []Bounder
-}
-
-func NewArea(cols, rows int) *Area {
-	return &Area{
-		Point:    Point{0, 0},
-		Cols:     cols,
-		Rows:     rows,
-		Bounders: make([]Bounder, 0),
-	}
-}
-
 func (a *Area) Render(w io.Writer) {
 	terminal.EraseScreen(w)
 	for _, b := range a.Bounders {
 		render(w, b, a.Point)
+	}
+
+	freePoints := a.CalculateFreePoints()
+
+	for _, p := range freePoints {
+		render(w, NewDebugCell(p.X, p.Y), a.Point)
 	}
 }
 
