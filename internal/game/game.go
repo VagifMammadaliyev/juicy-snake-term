@@ -2,6 +2,7 @@ package game
 
 import (
 	"bufio"
+	"math/rand"
 	"time"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
@@ -26,7 +27,7 @@ func NewGame(buf *bufio.Writer) *Game {
 	game := &Game{
 		screen:   buf,
 		area:     area,
-		snake:    entities.NewSnake(8, area.Cols/2, area.Rows/2),
+		snake:    entities.NewSnake(2, area.Cols/2, area.Rows/2),
 		bricks:   bricks,
 		Controls: make(chan terminal.Control, 2),
 		// food:     entities.NewFood(),
@@ -48,7 +49,30 @@ func (g *Game) addBricks() {
 	}
 }
 
-func (g *Game) Update() {
+func (g *Game) addFood() {
+	if g.food == nil {
+		points := g.area.CalculateFreePoints()
+		randomPoint := points[rand.Intn(len(points))]
+		g.food = entities.NewFood(randomPoint.X, randomPoint.Y)
+	}
+}
+
+func (g *Game) Update() bool {
+	g.snake.Move()
+	if g.food != nil {
+		shouldGrow := g.area.Collides(g.snake.Nodes[0], g.food)
+		if shouldGrow {
+			g.snake.Grow()
+			g.food = nil
+		}
+	}
+
+	for _, b := range g.bricks {
+		if g.area.Collides(g.snake.Nodes[0], b) {
+			return true
+		}
+	}
+
 	g.area.Bounders = g.area.Bounders[:0]
 	for _, b := range g.bricks {
 		g.area.Bounders = append(g.area.Bounders, b)
@@ -56,8 +80,13 @@ func (g *Game) Update() {
 	for _, n := range g.snake.Nodes {
 		g.area.Bounders = append(g.area.Bounders, n)
 	}
+
+	g.addFood()
+	g.area.Bounders = append(g.area.Bounders, g.food)
+
 	g.area.Render(g.screen)
 	g.screen.Flush()
+	return false
 }
 
 func (g *Game) Run() {
@@ -68,8 +97,10 @@ func (g *Game) Run() {
 		select {
 
 		case <-ticker.C:
-			g.snake.Move()
-			g.Update()
+			quit := g.Update()
+			if quit {
+				return
+			}
 
 		case control := <-g.Controls:
 			if control == terminal.Quit {

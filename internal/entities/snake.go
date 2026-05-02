@@ -103,3 +103,9 @@ func (s *Snake) moveNodes(xdelta, ydelta int) {
 		}
 	}
 }
+
+func (s *Snake) Grow() {
+	lastNode := s.Nodes[len(s.Nodes)-1]
+	newNode := newSnakeNode(lastNode.X, lastNode.Y)
+	s.Nodes = append(s.Nodes, newNode)
+}

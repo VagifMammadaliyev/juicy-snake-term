@@ -13,11 +13,11 @@ func (a *Area) Render(w io.Writer) {
 		render(w, b, a.Point)
 	}
 
-	freePoints := a.CalculateFreePoints()
-
-	for _, p := range freePoints {
-		render(w, NewDebugCell(p.X, p.Y), a.Point)
-	}
+	// freePoints := a.CalculateFreePoints()
+	//
+	// for _, p := range freePoints {
+	// 	render(w, NewDebugCell(p.X, p.Y), a.Point)
+	// }
 }
 
 func (a *Area) Reset(w io.Writer, b Bounder) {
