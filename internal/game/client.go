@@ -86,7 +86,13 @@ func (g *GameClient) listenServer(done chan struct{}) {
 				fmt.Println("received nil for bounder")
 			}
 		}
-		area.Render(g.screen)
+		camera := engine.CenteredCamera{
+			OffsetCols: 21,
+			OffsetRows: 11,
+			Pivot:      ea.PlayerSnakeHead,
+		}
+
+		area.RenderForCamera(g.screen, camera)
 		g.screen.Flush()
 	}
 }

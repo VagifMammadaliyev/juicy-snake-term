@@ -33,7 +33,7 @@ type GameServer struct {
 }
 
 func NewGameServer(conn *net.UDPConn) *GameServer {
-	area := engine.NewArea(40, 40)
+	area := engine.NewArea(101, 41)
 	bricks := make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4)
 	players := make(map[string]*Player)
 	controls := make(chan terminal.Control, 2)
@@ -52,7 +52,6 @@ func NewGameServer(conn *net.UDPConn) *GameServer {
 	}
 
 	game.addBricks()
-	game.addFood()
 	return game
 }
 
@@ -160,24 +159,30 @@ func (g *GameServer) updatePlayers() {
 
 	g.updateLock.Lock()
 
-	err := g.area.ToEncodedArea().Encode(encAreaBuff)
-	if err != nil {
-		// shouldn't happen, but if so, just don't update the players at current tick
-		log.Printf("can't encode the area: %v", err)
-		g.updateLock.Unlock()
-		return
-	}
-
 	addrs := make([]*net.UDPAddr, 0, len(g.players))
+	snakeHeads := make([]*entities.SnakeNode, 0, len(g.players))
 	for _, player := range g.players {
 		addrs = append(addrs, player.Addr)
+		snakeHeads = append(snakeHeads, player.Snake.Nodes[0])
 	}
+	encodedArea := g.area.ToEncodedArea()
 
 	g.updateLock.Unlock()
 
-	for _, addr := range addrs {
+	for i := range len(addrs) {
+		addr := addrs[i]
+		snakeHead := snakeHeads[i]
+		encodedArea.PlayerSnakeHead = snakeHead.Point
+
+		err := encodedArea.Encode(encAreaBuff)
+		if err != nil {
+			// shouldn't happen, but if so, just don't update this player at current tick
+			log.Printf("can't encode the area: %v", err)
+			continue
+		}
+
 		g.conn.SetWriteDeadline(time.Now().Add(80 * time.Millisecond))
-		_, err := g.conn.WriteToUDP(encAreaBuff.Bytes(), addr)
+		_, err = g.conn.WriteToUDP(encAreaBuff.Bytes(), addr)
 
 		if err != nil {
 			// it's OK we will try on the next main tick
