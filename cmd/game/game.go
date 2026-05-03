@@ -49,6 +49,7 @@ func main() {
 	defer conn.Close()
 	// end connect to server
 
+	// TODO: looks like a good place for context
 	done := make(chan struct{})
 	game := game.NewGameClient(conn, stdout)
 	go terminal.ListenControl(os.Stdin, game.Controls, done)

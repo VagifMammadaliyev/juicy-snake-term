@@ -46,7 +46,7 @@ func (g *GameClient) sendControls(control terminal.Control) error {
 
 	if _, err := g.conn.Write(buffer); err != nil {
 		// just ignore, client will try to resend
-		// by angrility smashing keyboard anyaway
+		// by angrily smashing the keyboard anyway
 		return err
 	}
 

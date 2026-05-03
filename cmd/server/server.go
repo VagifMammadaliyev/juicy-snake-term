@@ -27,11 +27,9 @@ func main() {
 	defer conn.Close()
 
 	gameServer := game.NewGameServer(conn)
-	go func() {
-		gameServer.Run()
-	}()
+	go gameServer.Run()
 
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 1024) // might be an overkill
 	for {
 		n, clientAddr, err := conn.ReadFromUDP(buffer)
 		if err != nil {

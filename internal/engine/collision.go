@@ -19,7 +19,7 @@ func (a *Area) getBusyPointMap() map[int]map[int]struct{} {
 }
 
 // CalculateFreePoints returns a slice of unoccupied [Point] objects in current area.
-// Very inefficent implementation.
+// Very inefficient implementation.
 func (a *Area) CalculateFreePoints() []Point {
 	busy := a.getBusyPointMap()
 	freePoints := make([]Point, 0, a.Cols*a.Rows)

@@ -65,7 +65,9 @@ func (g *GameServer) addFood() {
 	if g.food == nil {
 		randomPoint, err := g.area.GetRandomFreePoint()
 		if err != nil {
-			// panic here?
+			// no area for add food...
+			// in practice game should end very soon, as the whole space is occupied
+			// by snakes and there is a big probability of collision
 			return
 		}
 		g.food = entities.NewFood(randomPoint.X, randomPoint.Y)
@@ -80,13 +82,14 @@ func (g *GameServer) Update() {
 		player.Snake.Move()
 	}
 
+	// check collision with other snakes and itself
 	for addr, player := range g.players {
 		for anotherAddr, anotherPlayer := range g.players {
-			if addr == anotherAddr {
-				continue
-			}
+			for i, node := range anotherPlayer.Snake.Nodes {
+				if i == 0 && addr == anotherAddr {
+					continue // skip head of the same snake
+				}
 
-			for _, node := range anotherPlayer.Snake.Nodes {
 				if g.area.Collides(player.Snake.Nodes[0], node) {
 					delete(g.players, addr)
 				}
@@ -162,7 +165,7 @@ func (g *GameServer) UpdatePlayers() {
 }
 
 func (g *GameServer) Run() {
-	ticker := time.NewTicker(1000 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 	statTicker := time.NewTicker(2 * time.Second)
 	defer statTicker.Stop()
