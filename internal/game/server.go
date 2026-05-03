@@ -24,10 +24,12 @@ type GameServer struct {
 	area     *engine.Area
 	Controls chan terminal.Control
 
-	updateLock sync.Mutex
-	players    map[string]*Player
-	bricks     []*entities.Brick
-	food       *entities.Food
+	updateLock            sync.Mutex
+	encodedAreaBufferPool sync.Pool
+
+	players map[string]*Player
+	bricks  []*entities.Brick
+	food    *entities.Food
 }
 
 func NewGameServer(conn *net.UDPConn) *GameServer {
@@ -42,6 +44,11 @@ func NewGameServer(conn *net.UDPConn) *GameServer {
 		bricks:   bricks,
 		Controls: controls,
 		players:  players,
+		encodedAreaBufferPool: sync.Pool{
+			New: func() any {
+				return new(bytes.Buffer)
+			},
+		},
 	}
 
 	game.addBricks()
@@ -74,7 +81,7 @@ func (g *GameServer) addFood() {
 	}
 }
 
-func (g *GameServer) Update() {
+func (g *GameServer) update() {
 	g.updateLock.Lock()
 	defer g.updateLock.Unlock()
 
@@ -134,31 +141,47 @@ func (g *GameServer) Update() {
 	}
 
 	g.addFood()
-	g.area.Bounders = append(g.area.Bounders, g.food)
+	if g.food != nil {
+		g.area.Bounders = append(g.area.Bounders, g.food)
+	}
 }
 
-func (g *GameServer) UpdatePlayers() {
+func (g *GameServer) getAreaBuff() (*bytes.Buffer, func()) {
+	buff := g.encodedAreaBufferPool.Get().(*bytes.Buffer)
+	buff.Reset()
+	return buff, func() {
+		g.encodedAreaBufferPool.Put(buff)
+	}
+}
+
+func (g *GameServer) updatePlayers() {
+	encAreaBuff, putBack := g.getAreaBuff()
+	defer putBack()
+
 	g.updateLock.Lock()
-	defer g.updateLock.Unlock()
 
-	encodedArea, err := g.area.ToEncodedArea().Encode()
-
+	err := g.area.ToEncodedArea().Encode(encAreaBuff)
 	if err != nil {
 		// shouldn't happen, but if so, just don't update the players at current tick
 		log.Printf("can't encode the area: %v", err)
+		g.updateLock.Unlock()
 		return
 	}
 
-	buff := make([]byte, encodedArea.Len())
-	encodedArea.Read(buff)
-
+	addrs := make([]*net.UDPAddr, 0, len(g.players))
 	for _, player := range g.players {
+		addrs = append(addrs, player.Addr)
+	}
+
+	g.updateLock.Unlock()
+
+	for _, addr := range addrs {
 		g.conn.SetWriteDeadline(time.Now().Add(80 * time.Millisecond))
-		_, err := g.conn.WriteToUDP(buff, player.Addr)
+		_, err := g.conn.WriteToUDP(encAreaBuff.Bytes(), addr)
 
 		if err != nil {
 			// it's OK we will try on the next main tick
-			log.Printf("can't update the player %s: %v", player.Addr.String(), err)
+			log.Printf("can't update the player %s: %v", addr.String(), err)
 			continue
 		}
 	}
@@ -173,8 +196,8 @@ func (g *GameServer) Run() {
 	for {
 		select {
 		case <-ticker.C:
-			g.Update()
-			g.UpdatePlayers()
+			g.update()
+			g.updatePlayers()
 
 		case <-statTicker.C:
 			log.Printf("stats: players connected: %d", len(g.players))

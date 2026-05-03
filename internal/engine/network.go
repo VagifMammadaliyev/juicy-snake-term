@@ -28,14 +28,14 @@ func (a *Area) ToEncodedArea() *EncodedArea {
 	return &encodedArea
 }
 
-func (ea *EncodedArea) Encode() (*bytes.Buffer, error) {
-	var buff bytes.Buffer
-	encoder := gob.NewEncoder(&buff)
+func (ea *EncodedArea) Encode(buff *bytes.Buffer) error {
+	encoder := gob.NewEncoder(buff)
+
 	if err := encoder.Encode(*ea); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &buff, nil
+	return nil
 }
 
 func NewAreaFromEncodedArea(encodedArea *EncodedArea) *Area {
