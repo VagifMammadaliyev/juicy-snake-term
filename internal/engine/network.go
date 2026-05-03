@@ -7,9 +7,10 @@ import (
 
 type EncodedArea struct {
 	Point
-	Cols  int
-	Rows  int
-	Cells []Cell
+	Cols            int
+	Rows            int
+	Cells           []Cell
+	PlayerSnakeHead Point
 }
 
 func (a *Area) ToEncodedArea() *EncodedArea {
@@ -45,10 +46,7 @@ func NewAreaFromEncodedArea(encodedArea *EncodedArea) *Area {
 	}
 
 	return &Area{
-		Point: Point{
-			X: encodedArea.Point.X,
-			Y: encodedArea.Point.Y,
-		},
+		Point:    encodedArea.Point,
 		Cols:     encodedArea.Cols,
 		Rows:     encodedArea.Rows,
 		Bounders: bounders,

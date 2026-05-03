@@ -10,7 +10,7 @@ import (
 func (a *Area) Render(w io.Writer) {
 	terminal.EraseScreen(w)
 	for _, b := range a.Bounders {
-		render(w, b, a.Point)
+		b.Bounds().render(w, a.Point)
 	}
 
 	// freePoints := a.CalculateFreePoints()
@@ -41,18 +41,17 @@ func startPoint(c Cell, offset Point) Point {
 	}
 }
 
-func render(w io.Writer, b Bounder, offset Point) {
-	cell := b.Bounds()
-	cell.BgColor.Set(w, terminal.Background)
-	cell.FgColor.Set(w, terminal.Foreground)
+func (c Cell) render(w io.Writer, offset Point) {
+	c.BgColor.Set(w, terminal.Background)
+	c.FgColor.Set(w, terminal.Foreground)
 	defer terminal.ResetStyle(w)
 
-	point := startPoint(cell, offset)
+	point := startPoint(c, offset)
 
-	for y := 0; y < cell.Height; y++ {
-		for x := 0; x < cell.Width; x++ {
+	for y := 0; y < c.Height; y++ {
+		for x := 0; x < c.Width; x++ {
 			terminal.MoveCursor(w, point.Y+y, point.X+x)
-			fmt.Fprintf(w, "%c", cell.Symbol)
+			fmt.Fprintf(w, "%c", c.Symbol)
 		}
 	}
 }
