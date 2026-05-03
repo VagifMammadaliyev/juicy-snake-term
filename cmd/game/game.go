@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"log"
+	"net"
 	"os"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/game"
@@ -10,7 +12,9 @@ import (
 )
 
 func main() {
+	// prepare terminal
 	defer os.Stdin.Close()
+
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		panic(err)
@@ -25,10 +29,28 @@ func main() {
 
 	terminal.HideCursor(stdout)
 	defer terminal.RestoreCursor(stdout)
+	// end prepare terminal
+
+	// connect to server
+	hostAddress := "localhost:8080"
+	if len(os.Args) > 1 {
+		hostAddress = os.Args[1]
+	}
+
+	addr, err := net.ResolveUDPAddr("udp", hostAddress)
+	if err != nil {
+		log.Fatalf("can't resolve server addr: %v", err)
+	}
+
+	conn, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+		log.Fatalf("can't connect to server: %v", err)
+	}
+	defer conn.Close()
+	// end connect to server
 
 	done := make(chan struct{})
-	defer close(done)
-	game := game.NewGame(stdout)
+	game := game.NewGameClient(conn, stdout)
 	go terminal.ListenControl(os.Stdin, game.Controls, done)
-	game.Run()
+	game.Run(done)
 }

@@ -1,5 +1,10 @@
 package engine
 
+import (
+	"errors"
+	"math/rand"
+)
+
 func (a *Area) getBusyPointMap() map[int]map[int]struct{} {
 	busy := make(map[int]map[int]struct{}, len(a.Bounders))
 	for _, b := range a.Bounders {
@@ -38,4 +43,12 @@ func (a *Area) CalculateFreePoints() []Point {
 func (a *Area) Collides(i, j Bounder) bool {
 	cellI, cellJ := i.Bounds(), j.Bounds()
 	return cellI.X == cellJ.X && cellI.Y == cellJ.Y
+}
+
+func (a *Area) GetRandomFreePoint() (Point, error) {
+	freePoints := a.CalculateFreePoints()
+	if len(freePoints) == 0 {
+		return Point{}, errors.New("no free point available")
+	}
+	return freePoints[rand.Intn(len(freePoints))], nil
 }

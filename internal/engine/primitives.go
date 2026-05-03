@@ -30,6 +30,13 @@ func NewCell(x, y int, color terminal.Color) Cell {
 	}
 }
 
+// Bounds return the cell itself
+// this it to comply to [Bounder] interface
+// when constructing [Area] from [EncodedArea]
+func (c Cell) Bounds() Cell {
+	return c
+}
+
 type Bounder interface {
 	Bounds() Cell
 }

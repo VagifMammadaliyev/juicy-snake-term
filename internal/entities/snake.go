@@ -35,6 +35,9 @@ type Snake struct {
 }
 
 func NewSnake(length int, x, y int) *Snake {
+	if length == 0 {
+		length = 1
+	}
 	nodes := make([]*SnakeNode, 0, length)
 	for i := range length {
 		nodes = append(nodes, newSnakeNode(x+i, y))
