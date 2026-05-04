@@ -3,6 +3,7 @@ package game
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -29,14 +30,15 @@ type GameServer struct {
 
 	players map[string]*Player
 	bricks  []*entities.Brick
-	food    *entities.Food
+	foods   []*entities.Food
 }
 
 func NewGameServer(conn *net.UDPConn) *GameServer {
-	area := engine.NewArea(101, 41)
+	area := engine.NewArea(1111, 101)
 	bricks := make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4)
 	players := make(map[string]*Player)
 	controls := make(chan terminal.Control, 2)
+	foods := make([]*entities.Food, 0, 500)
 
 	game := &GameServer{
 		conn:     conn,
@@ -49,6 +51,7 @@ func NewGameServer(conn *net.UDPConn) *GameServer {
 				return new(bytes.Buffer)
 			},
 		},
+		foods: foods,
 	}
 
 	game.addBricks()
@@ -68,7 +71,7 @@ func (g *GameServer) addBricks() {
 }
 
 func (g *GameServer) addFood() {
-	if g.food == nil {
+	if len(g.foods) < 500 {
 		randomPoint, err := g.area.GetRandomFreePoint()
 		if err != nil {
 			// no area for add food...
@@ -76,8 +79,19 @@ func (g *GameServer) addFood() {
 			// by snakes and there is a big probability of collision
 			return
 		}
-		g.food = entities.NewFood(randomPoint.X, randomPoint.Y)
+		g.foods = append(g.foods, entities.NewFood(randomPoint.X, randomPoint.Y))
 	}
+}
+
+func (g *GameServer) deleteFoods(foodIndexToRemove map[int]bool) []*entities.Food {
+	j := 0
+	for i, val := range g.foods {
+		if !foodIndexToRemove[i] {
+			g.foods[j] = val
+			j++
+		}
+	}
+	return g.foods[:j]
 }
 
 func (g *GameServer) update() {
@@ -104,16 +118,21 @@ func (g *GameServer) update() {
 	}
 
 	// check food collision with any snake
-	if g.food != nil {
+	fmt.Printf("food amount: %d\n", len(g.foods))
+	eatenFoods := make(map[int]bool, len(g.players)) // at most "player" amount of foods can be theoritically eaten during one tick
+	for i, food := range g.foods {
 		for _, player := range g.players {
 			snake := player.Snake
 
-			if g.area.Collides(snake.Nodes[0], g.food) {
+			if g.area.Collides(snake.Nodes[0], food) {
 				snake.Grow()
-				g.food = nil
+				eatenFoods[i] = true
 			}
 		}
 	}
+
+	g.foods = g.deleteFoods(eatenFoods)
+	fmt.Printf("food amount after delete: %d\n", len(g.foods))
 
 	// check brick collision with any snake
 	for _, b := range g.bricks {
@@ -140,8 +159,8 @@ func (g *GameServer) update() {
 	}
 
 	g.addFood()
-	if g.food != nil {
-		g.area.Bounders = append(g.area.Bounders, g.food)
+	for _, food := range g.foods {
+		g.area.Bounders = append(g.area.Bounders, food)
 	}
 }
 
@@ -173,6 +192,7 @@ func (g *GameServer) updatePlayers() {
 		addr := addrs[i]
 		snakeHead := snakeHeads[i]
 		encodedArea.PlayerSnakeHead = snakeHead.Point
+		originalCells := encodedArea.RemoveInvisibleCells(snakeHead.Point, 21)
 
 		err := encodedArea.Encode(encAreaBuff)
 		if err != nil {
@@ -189,6 +209,10 @@ func (g *GameServer) updatePlayers() {
 			log.Printf("can't update the player %s: %v", addr.String(), err)
 			continue
 		}
+
+		// so we can filter our for next player
+		encAreaBuff.Reset()
+		encodedArea.Cells = originalCells
 	}
 }
 

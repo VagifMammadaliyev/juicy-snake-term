@@ -5,6 +5,7 @@ package engine
 
 import (
 	"io"
+	"slices"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
@@ -94,4 +95,25 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 		NewCell(0, y+1, terminal.BrightBlack).render(w, a.Point)
 		NewCell(offsetCols*2, y+1, terminal.BrightBlack).render(w, a.Point)
 	}
+}
+
+// HACK
+func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offset int) []Cell {
+	visibleCells := make([]Cell, 0, len(ea.Cells))
+
+	maxX := pivot.X + offset
+	maxY := pivot.Y + offset
+	minX := pivot.X - offset
+	minY := pivot.Y - offset
+
+	for _, c := range ea.Cells {
+		if c.X <= maxX && c.X > minX &&
+			c.Y <= maxY && c.Y > minY {
+			visibleCells = append(visibleCells, c)
+		}
+	}
+
+	oldCells := slices.Clone(ea.Cells)
+	ea.Cells = visibleCells
+	return oldCells
 }
