@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/VagifMammadaliyev/juicy-snake-term/internal/game"
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/client"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 	"golang.org/x/term"
 )
@@ -51,7 +51,7 @@ func main() {
 
 	// TODO: looks like a good place for context
 	done := make(chan struct{})
-	game := game.NewGameClient(conn, stdout)
+	game := client.NewGameClient(conn, stdout)
 	go terminal.ListenControl(os.Stdin, game.Controls, done)
 	game.Run(done)
 }
