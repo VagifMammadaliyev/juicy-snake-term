@@ -29,7 +29,7 @@ const (
 )
 
 type Snake struct {
-	Nodes           []*SnakeNode
+	Nodes           []*SnakeNode // this should be private
 	direction       SnakeDirection
 	queuedDirection SnakeDirection
 }
@@ -111,4 +111,8 @@ func (s *Snake) Grow() {
 	lastNode := s.Nodes[len(s.Nodes)-1]
 	newNode := newSnakeNode(lastNode.X, lastNode.Y)
 	s.Nodes = append(s.Nodes, newNode)
+}
+
+func (s *Snake) Head() *SnakeNode {
+	return s.Nodes[0]
 }
