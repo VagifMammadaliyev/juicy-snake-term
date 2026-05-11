@@ -51,4 +51,5 @@ func NewAreaFromEncodedArea(encodedArea *EncodedArea) *Area {
 		Rows:     encodedArea.Rows,
 		Bounders: bounders,
 	}
+
 }

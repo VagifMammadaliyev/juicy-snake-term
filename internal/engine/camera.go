@@ -23,11 +23,8 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	offsetCols := camera.OffsetCols
 	offsetRows := camera.OffsetRows
 
-	// for even cols and rows, center will be a little bit off
-	// but that's OK, let's just cope with it, or just set [Area] cols and rows to odd numbers
-	// so we actually can get the center
-	// centerX := a.Cols / 2
-	// centerY := a.Rows / 2
+	// center of the camera is whatever offset we want, because
+	// it should be defined by camera settings
 	centerX := camera.OffsetCols
 	centerY := camera.OffsetRows
 
@@ -98,13 +95,13 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 }
 
 // HACK
-func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offset int) []Cell {
+func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offsetX, offsetY int) []Cell {
 	visibleCells := make([]Cell, 0, len(ea.Cells))
 
-	maxX := pivot.X + offset
-	maxY := pivot.Y + offset
-	minX := pivot.X - offset
-	minY := pivot.Y - offset
+	maxX := pivot.X + offsetX
+	maxY := pivot.Y + offsetY
+	minX := pivot.X - offsetX
+	minY := pivot.Y - offsetY
 
 	for _, c := range ea.Cells {
 		if c.X <= maxX && c.X > minX &&

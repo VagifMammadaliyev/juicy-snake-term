@@ -71,6 +71,7 @@ func (g *GameServer) updatePlayers() {
 		}
 
 		g.conn.SetWriteDeadline(time.Now().Add(80 * time.Millisecond))
+		fmt.Printf("player update size for %s: %d bytes\n", networkPlayer.Addr.String(), g.updateBuffer.Len())
 		_, err = g.conn.WriteToUDP(g.updateBuffer.Bytes(), networkPlayer.Addr)
 
 		if err != nil {

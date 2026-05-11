@@ -51,7 +51,7 @@ func (l *Logic) addBricks() {
 }
 
 func (l *Logic) addFood() {
-	if len(l.foods) < 1 {
+	if len(l.foods) < 500 {
 		randomPoint, err := l.area.GetRandomFreePoint()
 		if err != nil {
 			// no area for add food...
@@ -162,7 +162,7 @@ func (l *Logic) GetStateForPlayer(id string) (*engine.EncodedArea, error) {
 
 	encodedArea := l.area.ToEncodedArea()
 	encodedArea.PlayerSnakeHead = snakeHead.Point
-	encodedArea.RemoveInvisibleCells(snakeHead.Point, 21)
+	encodedArea.RemoveInvisibleCells(snakeHead.Point, 21, 11)
 
 	return encodedArea, nil
 }
