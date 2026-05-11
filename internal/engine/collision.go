@@ -31,7 +31,7 @@ func (a *Area) CalculateFreePoints() []Point {
 	return freePoints
 }
 
-func (a *Area) Collides(i, j Bounder) bool {
+func Collides(i, j Bounder) bool {
 	cellI, cellJ := i.Bounds(), j.Bounds()
 	return cellI.X == cellJ.X && cellI.Y == cellJ.Y
 }

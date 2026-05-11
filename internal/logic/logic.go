@@ -84,17 +84,21 @@ func (l *Logic) UpdateState() {
 	}
 
 	// check collision with other snakes and itself
+players:
 	for pid, player := range l.players {
-		for _, anotherPlayer := range l.players {
-			for i, node := range anotherPlayer.Snake.Nodes {
-				if i == 0 && player == anotherPlayer {
-					continue // skip head of the same snake
-				}
-
-				if l.area.Collides(player.Snake.Head(), node) {
+		for aid, anotherPlayer := range l.players {
+			if pid == aid {
+				if player.Snake.CollidesWithItself() {
+					fmt.Printf("player %s collided with itself\n", pid)
 					delete(l.players, pid)
+					continue players
 				}
-
+			} else {
+				if player.Snake.Collides(anotherPlayer.Snake) {
+					fmt.Printf("player %s collided with player %s\n", pid, aid)
+					delete(l.players, pid)
+					continue players
+				}
 			}
 		}
 	}
@@ -103,7 +107,7 @@ func (l *Logic) UpdateState() {
 	for _, b := range l.bricks {
 		for pid, player := range l.players {
 			snake := player.Snake
-			if l.area.Collides(snake.Head(), b) {
+			if engine.Collides(snake.Head(), b) {
 				delete(l.players, pid)
 			}
 		}
@@ -115,7 +119,7 @@ func (l *Logic) UpdateState() {
 		for _, player := range l.players {
 			snake := player.Snake
 
-			if l.area.Collides(snake.Head(), food) {
+			if engine.Collides(snake.Head(), food) {
 				snake.Grow()
 				eatenFoods[i] = struct{}{}
 			}
@@ -133,14 +137,13 @@ func (l *Logic) UpdateState() {
 	}
 
 	for _, player := range l.players {
-		s := player.Snake
-
-		for _, n := range s.Nodes {
-			l.area.Bounders = append(l.area.Bounders, n)
-		}
+		l.area.Bounders = append(l.area.Bounders, player.Snake.Bounders...)
 	}
 
+	// regenerate food after adding players and bricks to area,
+	// otherwise it can be generated on top of them
 	l.addFood()
+
 	for _, food := range l.foods {
 		l.area.Bounders = append(l.area.Bounders, food)
 	}
@@ -153,7 +156,6 @@ func (l *Logic) GetStateForPlayer(id string) (*engine.EncodedArea, error) {
 	player, ok := l.players[id]
 	if !ok {
 		return nil, fmt.Errorf("player not found: %s", id)
-
 	}
 
 	snakeHead := player.Snake.Head()
