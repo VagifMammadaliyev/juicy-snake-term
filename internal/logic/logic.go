@@ -1,4 +1,4 @@
-package server
+package logic
 
 import (
 	"fmt"
@@ -7,9 +7,11 @@ import (
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/entities"
+	"github.com/google/uuid"
 )
 
 type Player struct {
+	ID    string
 	Snake *entities.Snake
 }
 
@@ -17,22 +19,19 @@ type Logic struct {
 	area       *engine.Area
 	updateLock sync.Mutex
 
-	players map[*Player]struct{}
+	players map[string]Player
 	bricks  []*entities.Brick
 	foods   []*entities.Food
 }
 
 func NewLogic() *Logic {
 	area := engine.NewArea(31, 31)
-	bricks := make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4)
-	players := make(map[*Player]struct{})
-	foods := make([]*entities.Food, 0, 10)
 
 	logic := &Logic{
 		area:    area,
-		bricks:  bricks,
-		players: players,
-		foods:   foods,
+		bricks:  make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4),
+		players: make(map[string]Player),
+		foods:   make([]*entities.Food, 0, 10),
 	}
 
 	logic.addBricks()
@@ -76,24 +75,24 @@ func deleteFromSlice[T entities.Food | Player](s []*T, indexesToRemove map[int]s
 	return s[:j]
 }
 
-func (l *Logic) update() {
+func (l *Logic) UpdateState() {
 	l.updateLock.Lock()
 	defer l.updateLock.Unlock()
 
-	for player := range l.players {
+	for _, player := range l.players {
 		player.Snake.Move()
 	}
 
 	// check collision with other snakes and itself
-	for player := range l.players {
-		for anotherPlayer := range l.players {
+	for pid, player := range l.players {
+		for _, anotherPlayer := range l.players {
 			for i, node := range anotherPlayer.Snake.Nodes {
 				if i == 0 && player == anotherPlayer {
 					continue // skip head of the same snake
 				}
 
 				if l.area.Collides(player.Snake.Head(), node) {
-					delete(l.players, player)
+					delete(l.players, pid)
 				}
 
 			}
@@ -102,10 +101,10 @@ func (l *Logic) update() {
 
 	// check brick collision with any snake
 	for _, b := range l.bricks {
-		for player := range l.players {
+		for pid, player := range l.players {
 			snake := player.Snake
 			if l.area.Collides(snake.Head(), b) {
-				delete(l.players, player)
+				delete(l.players, pid)
 			}
 		}
 	}
@@ -113,7 +112,7 @@ func (l *Logic) update() {
 	// check food collision with any snake
 	eatenFoods := make(map[int]struct{}, len(l.players)) // at most "player" amount of foods can be theoritically eaten during one tick
 	for i, food := range l.foods {
-		for player := range l.players {
+		for _, player := range l.players {
 			snake := player.Snake
 
 			if l.area.Collides(snake.Head(), food) {
@@ -123,11 +122,8 @@ func (l *Logic) update() {
 		}
 	}
 
-	if len(eatenFoods) > 0 {
-		fmt.Printf("deleting foods with indexes: %v\n", eatenFoods)
+	if len(eatenFoods) != 0 {
 		l.foods = deleteFromSlice(l.foods, eatenFoods)
-		fmt.Printf("eaten foods: %d\n", len(eatenFoods))
-		fmt.Printf("foods left: %d\n", len(l.foods))
 	}
 
 	l.area.Bounders = l.area.Bounders[:0]
@@ -136,7 +132,7 @@ func (l *Logic) update() {
 		l.area.Bounders = append(l.area.Bounders, b)
 	}
 
-	for player := range l.players {
+	for _, player := range l.players {
 		s := player.Snake
 
 		for _, n := range s.Nodes {
@@ -150,13 +146,13 @@ func (l *Logic) update() {
 	}
 }
 
-func (l *Logic) GetUpdateForPLayer(player *Player) (*engine.EncodedArea, error) {
+func (l *Logic) GetStateForPlayer(id string) (*engine.EncodedArea, error) {
 	l.updateLock.Lock()
 	defer l.updateLock.Unlock()
 
-	_, ok := l.players[player]
+	player, ok := l.players[id]
 	if !ok {
-		return nil, fmt.Errorf("player not found: %p", player)
+		return nil, fmt.Errorf("player not found: %s", id)
 
 	}
 
@@ -169,22 +165,29 @@ func (l *Logic) GetUpdateForPLayer(player *Player) (*engine.EncodedArea, error) 
 	return encodedArea, nil
 }
 
-func (l *Logic) AddPlayer() (*Player, error) {
+func (l *Logic) AddPlayer(direction entities.SnakeDirection) (string, error) {
+	l.updateLock.Lock()
+	defer l.updateLock.Unlock()
+
 	freePoint, err := l.area.GetRandomFreePoint()
 	if err != nil {
-		return nil, fmt.Errorf("can't add player: %w", err)
+		return "", fmt.Errorf("can't add player: %w", err)
 	}
-	player := &Player{
-		Snake: entities.NewSnake(1, freePoint.X, freePoint.Y),
+	player := Player{
+		Snake: entities.NewSnakeWithDirection(1, freePoint.X, freePoint.Y, direction),
 	}
-	l.players[player] = struct{}{}
-	return player, nil
+	id := uuid.NewString()
+	l.players[id] = player
+	return id, nil
 }
 
-func (l *Logic) SetPlayerDirection(player *Player, direction entities.SnakeDirection) error {
-	_, ok := l.players[player]
+func (l *Logic) SetPlayerDirection(id string, direction entities.SnakeDirection) error {
+	l.updateLock.Lock()
+	defer l.updateLock.Unlock()
+
+	player, ok := l.players[id]
 	if !ok {
-		return fmt.Errorf("player not found: %p", player)
+		return fmt.Errorf("player not found: %s", id)
 	}
 
 	player.Snake.SetDirection(direction)
