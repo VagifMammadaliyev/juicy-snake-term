@@ -13,6 +13,9 @@ import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
+const writeDeadline = 80 * time.Millisecond
+const maxServerBytes = 1024 // 1KB
+
 type GameClient struct {
 	conn     *net.UDPConn
 	screen   *bufio.Writer
@@ -31,7 +34,7 @@ func NewGameClient(conn *net.UDPConn, buf *bufio.Writer) *GameClient {
 }
 
 func (g *GameClient) sendControls(control terminal.Control) error {
-	g.conn.SetWriteDeadline(time.Now().Add(80 * time.Millisecond))
+	g.conn.SetWriteDeadline(time.Now().Add(writeDeadline))
 
 	var controlBuffer bytes.Buffer
 
@@ -55,7 +58,7 @@ func (g *GameClient) sendControls(control terminal.Control) error {
 
 func (g *GameClient) listenServer(done chan struct{}) {
 
-	buffer := make([]byte, 1024*41) // 41KB for now, should be enough to handle worst case scenario
+	buffer := make([]byte, maxServerBytes)
 
 	tickDurations := make([]time.Duration, 0, 100)
 	for {
@@ -93,8 +96,8 @@ func (g *GameClient) listenServer(done chan struct{}) {
 			}
 		}
 		camera := engine.CenteredCamera{
-			OffsetCols: 21,
-			OffsetRows: 11,
+			OffsetCols: engine.DefaultCameraOffsetCols,
+			OffsetRows: engine.DefaultCameraOffsetRows,
 			Pivot:      ea.PlayerSnakeHead,
 		}
 

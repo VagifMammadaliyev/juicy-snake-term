@@ -24,14 +24,20 @@ type Logic struct {
 	foods   []*entities.Food
 }
 
+const (
+	maxSquareAreaCols = 8191
+	maxSquareAreaRows = 8191
+	foodCount         = 70000
+)
+
 func NewLogic() *Logic {
-	area := engine.NewArea(101, 101)
+	area := engine.NewArea(maxSquareAreaCols, maxSquareAreaRows)
 
 	logic := &Logic{
 		area:    area,
 		bricks:  make([]*entities.Brick, 0, area.Cols*2+area.Rows*2-4),
 		players: make(map[string]Player),
-		foods:   make([]*entities.Food, 0, 10),
+		foods:   make([]*entities.Food, 0, foodCount),
 	}
 
 	logic.addBricks()
@@ -51,7 +57,7 @@ func (l *Logic) addBricks() {
 }
 
 func (l *Logic) addFood() {
-	if len(l.foods) < 500 {
+	for n := len(l.foods); n < foodCount; n++ {
 		randomPoint, err := l.area.GetRandomFreePoint()
 		if err != nil {
 			// no area for add food...

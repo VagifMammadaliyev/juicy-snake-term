@@ -38,7 +38,9 @@ func (ea *EncodedArea) Encode(buff *bytes.Buffer) error {
 	b = binary.BigEndian.AppendUint16(b, uint16(ea.PlayerSnakeHead.X))
 	b = binary.BigEndian.AppendUint16(b, uint16(ea.PlayerSnakeHead.Y))
 	for _, c := range ea.Cells {
-		b = append(b, byte(c.BgColor), uint8(c.X), uint8(c.Y))
+		b = append(b, byte(c.BgColor))
+		b = binary.BigEndian.AppendUint16(b, uint16(c.X))
+		b = binary.BigEndian.AppendUint16(b, uint16(c.Y))
 	}
 
 	_, err := buff.Write(b)
@@ -59,14 +61,15 @@ func NewEncodedAreaFromBytes(data []byte) (*EncodedArea, error) {
 	snakeHeadY := int16(binary.BigEndian.Uint16(data[2:4]))
 	playerSnakeHead := Point{X: snakeHeadX, Y: snakeHeadY}
 
-	cells := make([]Cell, 0, (n-4)/3) // each cell is 3 bytes (BgColor, X, Y)
-	for i := 4; i < n; i += 3 {
+	cells := make([]Cell, 0, (n-4)/5) // each cell is 5 bytes (BgColor, X, Y)
+	for i := 4; i < n; i += 5 {
 		if i+2 >= n {
 			return nil, fmt.Errorf("incomplete cell data at index %d", i)
 		}
 		bgColor := terminal.Color(int16(data[i]))
-		x := int16(data[i+1])
-		y := int16(data[i+2])
+		x := int16(binary.BigEndian.Uint16(data[i+1 : i+3]))
+		y := int16(binary.BigEndian.Uint16(data[i+3 : i+5]))
+
 		cells = append(cells, Cell{
 			Point:   Point{X: x, Y: y},
 			BgColor: bgColor,
@@ -79,8 +82,8 @@ func NewEncodedAreaFromBytes(data []byte) (*EncodedArea, error) {
 
 	return &EncodedArea{
 		Point:           Point{0, 0},
-		Cols:            21*2 + 1,
-		Rows:            11*2 + 1,
+		Cols:            DefaultCameraOffsetCols*2 + 1,
+		Rows:            DefaultCameraOffsetRows*2 + 1,
 		Cells:           cells,
 		PlayerSnakeHead: playerSnakeHead,
 	}, nil

@@ -9,6 +9,11 @@ import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
+const (
+	DefaultCameraOffsetCols = 21
+	DefaultCameraOffsetRows = 11
+)
+
 type CenteredCamera struct {
 	OffsetCols int16
 	OffsetRows int16
