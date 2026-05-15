@@ -57,8 +57,11 @@ func (g *GameClient) listenServer(done chan struct{}) {
 
 	buffer := make([]byte, 1024*41) // 41KB for now, should be enough to handle worst case scenario
 
+	tickDurations := make([]time.Duration, 0, 100)
 	for {
+		tickStartTime := time.Now()
 		n, _, err := g.conn.ReadFromUDP(buffer)
+
 		if err != nil {
 			// can't read from server
 			// let's just infinitely try to read in a loop,
@@ -72,15 +75,18 @@ func (g *GameClient) listenServer(done chan struct{}) {
 				continue
 			}
 		}
+		tickDurations = append(tickDurations, time.Since(tickStartTime))
+		if len(tickDurations) > 100 {
+			tickDurations = tickDurations[1:]
+		}
 
-		decoder := gob.NewDecoder(bytes.NewReader(buffer[:n]))
-		var ea engine.EncodedArea
-		if err = decoder.Decode(&ea); err != nil {
-			// shouldn't happen, but let's just skip for now
+		ea, err := engine.NewEncodedAreaFromBytes(buffer[:n])
+		if err != nil {
+			log.Printf("can't decode server update: %v\n", err)
 			continue
 		}
 
-		area := engine.NewAreaFromEncodedArea(&ea)
+		area := engine.NewAreaFromEncodedArea(ea)
 		for _, b := range area.Bounders {
 			if b == nil {
 				fmt.Println("received nil for bounder")
@@ -93,6 +99,22 @@ func (g *GameClient) listenServer(done chan struct{}) {
 		}
 
 		area.RenderForCamera(g.screen, camera)
+
+		terminal.MoveCursor(g.screen, area.Rows+1, 0)
+		fmt.Fprintf(g.screen, "Bytes received: %10d\n\r", n)
+		fmt.Fprintf(g.screen, "Area size: %2dx%2d\n\r", area.Cols, area.Rows)
+		fmt.Fprintf(g.screen, "Bounders: %4d\n\r", len(area.Bounders))
+		fmt.Fprintf(g.screen, "Per bounder: %4.2f bytes\n\r", float64(n)/float64(len(area.Bounders)))
+		fmt.Fprintf(g.screen, "Player snake head: %2d,%2d\n\r", ea.PlayerSnakeHead.X, ea.PlayerSnakeHead.Y)
+
+		averageTickDuration := time.Duration(0)
+		for _, d := range tickDurations {
+			averageTickDuration += d
+		}
+		averageTickDuration /= time.Duration(len(tickDurations))
+
+		fmt.Fprintf(g.screen, "Tick duration: %s\n\r", averageTickDuration)
+
 		g.screen.Flush()
 	}
 }

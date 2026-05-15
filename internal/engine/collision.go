@@ -19,10 +19,10 @@ func (a *Area) getBusySlice() []bool {
 func (a *Area) CalculateFreePoints() []Point {
 	busy := a.getBusySlice()
 
-	freePoints := make([]Point, 0, a.Cols*a.Rows-len(a.Bounders))
+	freePoints := make([]Point, 0, a.Cols*a.Rows-int16(len(a.Bounders)))
 
-	for x := 0; x < a.Cols; x++ {
-		for y := 0; y < a.Rows; y++ {
+	for x := int16(0); x < a.Cols; x++ {
+		for y := int16(0); y < a.Rows; y++ {
 			if !busy[y*a.Cols+x] {
 				freePoints = append(freePoints, Point{x, y})
 			}
@@ -43,8 +43,8 @@ const maxFreePointGuesses = 5
 func (a *Area) GetRandomFreePoint() (Point, error) {
 guesses:
 	for range maxFreePointGuesses {
-		randomX := rand.Intn(a.Cols)
-		randomY := rand.Intn(a.Rows)
+		randomX := int16(rand.Intn(int(a.Cols)))
+		randomY := int16(rand.Intn(int(a.Rows)))
 
 		// We also can couple bricks knwoledge into area
 		// if this will become real performance issue.

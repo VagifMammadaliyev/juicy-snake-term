@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-func MoveCursor(w io.Writer, line, column int) {
+func MoveCursor(w io.Writer, line, column int16) {
 	fmt.Fprintf(w, "%c[%d;%dH", Esc, line, column)
 }
 

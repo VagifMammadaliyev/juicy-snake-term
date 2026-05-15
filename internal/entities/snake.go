@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
-	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
 type SnakeNode struct {
@@ -15,9 +14,9 @@ func (sn *SnakeNode) Bounds() engine.Cell {
 	return sn.Cell
 }
 
-func newSnakeNode(x, y int) *SnakeNode {
+func newSnakeNode(x, y int16) *SnakeNode {
 	return &SnakeNode{
-		Cell: engine.NewCell(x, y, terminal.Green),
+		Cell: engine.NewCell(x, y, SnakeColor),
 	}
 }
 
@@ -37,7 +36,7 @@ type Snake struct {
 	queuedDirection SnakeDirection
 }
 
-func NewSnake(length int, x, y int) *Snake {
+func NewSnake(length int16, x, y int16) *Snake {
 	if length == 0 {
 		length = 1
 	}
@@ -58,7 +57,7 @@ func NewSnake(length int, x, y int) *Snake {
 	}
 }
 
-func NewSnakeWithDirection(length int, x, y int, direction SnakeDirection) *Snake {
+func NewSnakeWithDirection(length int16, x, y int16, direction SnakeDirection) *Snake {
 	if length == 0 {
 		length = 1
 	}
@@ -114,12 +113,12 @@ func (s *Snake) Move() {
 	}
 }
 
-func (s *Snake) moveNodes(xdelta, ydelta int) {
+func (s *Snake) moveNodes(xdelta, ydelta int16) {
 	var (
-		prevX    int
-		prevY    int
-		currentX int
-		currentY int
+		prevX    int16
+		prevY    int16
+		currentX int16
+		currentY int16
 	)
 
 	for i, node := range s.nodes {

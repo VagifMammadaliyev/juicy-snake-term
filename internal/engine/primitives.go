@@ -3,20 +3,20 @@ package engine
 import "github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 
 type Point struct {
-	X int
-	Y int
+	X int16
+	Y int16
 }
 
 type Cell struct {
 	Point
-	Height  int
-	Width   int
+	Height  int16
+	Width   int16
 	FgColor terminal.Color
 	BgColor terminal.Color
 	Symbol  rune
 }
 
-func NewCell(x, y int, color terminal.Color) Cell {
+func NewCell(x, y int16, color terminal.Color) Cell {
 	return Cell{
 		Point: Point{
 			X: x,
@@ -43,12 +43,12 @@ type Bounder interface {
 
 type Area struct {
 	Point
-	Cols     int
-	Rows     int
+	Cols     int16
+	Rows     int16
 	Bounders []Bounder
 }
 
-func NewArea(cols, rows int) *Area {
+func NewArea(cols, rows int16) *Area {
 	return &Area{
 		Point:    Point{0, 0},
 		Cols:     cols,
@@ -61,7 +61,7 @@ type DebugCell struct {
 	Cell
 }
 
-func NewDebugCell(x, y int) DebugCell {
+func NewDebugCell(x, y int16) DebugCell {
 	return DebugCell{
 		Cell: Cell{
 			Point: Point{

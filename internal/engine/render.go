@@ -26,8 +26,8 @@ func (a *Area) Reset(w io.Writer, b Bounder) {
 	cell := b.Bounds()
 	point := startPoint(cell, a.Point)
 
-	for y := 0; y < cell.Height; y++ {
-		for x := 0; x < cell.Width; x++ {
+	for y := int16(0); y < cell.Height; y++ {
+		for x := int16(0); x < cell.Width; x++ {
 			terminal.Erase(w, point.Y+y, point.Y+x)
 		}
 	}
@@ -48,8 +48,8 @@ func (c Cell) render(w io.Writer, offset Point) {
 
 	point := startPoint(c, offset)
 
-	for y := 0; y < c.Height; y++ {
-		for x := 0; x < c.Width; x++ {
+	for y := int16(0); y < c.Height; y++ {
+		for x := int16(0); x < c.Width; x++ {
 			terminal.MoveCursor(w, point.Y+y, point.X+x)
 			fmt.Fprintf(w, "%c", c.Symbol)
 		}

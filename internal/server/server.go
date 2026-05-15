@@ -83,7 +83,7 @@ func (g *GameServer) updatePlayers() {
 }
 
 func (g *GameServer) Run() {
-	ticker := time.NewTicker(150 * time.Millisecond)
+	ticker := time.NewTicker(80 * time.Millisecond)
 	defer ticker.Stop()
 	statTicker := time.NewTicker(2 * time.Second)
 	defer statTicker.Stop()

@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-type Color int
+type Color int16
 
 const (
 	Black Color = iota

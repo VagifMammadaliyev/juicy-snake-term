@@ -1,6 +1,6 @@
 package engine
 
 const (
-	DefaultHeight int = 1
-	DefaultWidth  int = 2
+	DefaultHeight int16 = 1
+	DefaultWidth  int16 = 2
 )

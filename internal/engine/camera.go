@@ -5,14 +5,13 @@ package engine
 
 import (
 	"io"
-	"slices"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
 type CenteredCamera struct {
-	OffsetCols int
-	OffsetRows int
+	OffsetCols int16
+	OffsetRows int16
 	Pivot      Point
 }
 
@@ -37,7 +36,7 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	offsetRowsError := 1 - a.Rows%2
 
 	var (
-		maxX, maxY, minX, minY int
+		maxX, maxY, minX, minY int16
 	)
 
 	// offset errors should be re-added to either side, not both
@@ -95,7 +94,7 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 }
 
 // HACK
-func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offsetX, offsetY int) []Cell {
+func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offsetX, offsetY int16) {
 	visibleCells := make([]Cell, 0, len(ea.Cells))
 
 	maxX := pivot.X + offsetX
@@ -110,7 +109,7 @@ func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offsetX, offsetY int) [
 		}
 	}
 
-	oldCells := slices.Clone(ea.Cells)
 	ea.Cells = visibleCells
-	return oldCells
+	ea.Cols = offsetX*2 + 1
+	ea.Rows = offsetY*2 + 1
 }
