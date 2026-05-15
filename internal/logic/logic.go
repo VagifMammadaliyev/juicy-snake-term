@@ -25,7 +25,7 @@ type Logic struct {
 }
 
 func NewLogic() *Logic {
-	area := engine.NewArea(31, 31)
+	area := engine.NewArea(101, 101)
 
 	logic := &Logic{
 		area:    area,
