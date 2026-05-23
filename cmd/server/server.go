@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/logic"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/server"
 )
 
@@ -26,7 +27,8 @@ func main() {
 	}
 	defer conn.Close()
 
-	gameServer := server.NewGameServer(conn)
+	logic := logic.NewLogic()
+	gameServer := server.NewGameServer(conn, logic)
 	go gameServer.Run()
 
 	buffer := make([]byte, 1024) // might be an overkill

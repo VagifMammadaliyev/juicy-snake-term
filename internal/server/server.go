@@ -6,27 +6,36 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/entities"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
+type Logic interface {
+	UpdateState()
+	WriteStateForPlayer(playerID string, buff *bytes.Buffer) error
+	AddPlayer(direction entities.SnakeDirection) (playerID string, err error)
+	SetPlayerDirection(playerID string, direction entities.SnakeDirection) error
+}
+
 type NetworkPlayer struct {
-	Player *Player
-	Addr   *net.UDPAddr
+	PlayerID string
+	Addr     *net.UDPAddr
 }
 
 type GameServer struct {
 	conn           *net.UDPConn
 	networkPlayers map[string]NetworkPlayer
+	serverLock     sync.Mutex
 	updateBuffer   bytes.Buffer
 
 	Controls chan terminal.Control
-	Logic    *Logic
+	Logic    Logic
 }
 
-func NewGameServer(conn *net.UDPConn) *GameServer {
+func NewGameServer(conn *net.UDPConn, logic Logic) *GameServer {
 	controls := make(chan terminal.Control, 2)
 
 	gameServer := &GameServer{
@@ -35,26 +44,26 @@ func NewGameServer(conn *net.UDPConn) *GameServer {
 		updateBuffer:   bytes.Buffer{},
 
 		Controls: controls,
-		Logic:    NewLogic(),
+		Logic:    logic,
 	}
 
 	return gameServer
 }
 
 func (g *GameServer) updatePlayers() {
+	g.serverLock.Lock()
+	defer g.serverLock.Unlock()
+
 	for _, networkPlayer := range g.networkPlayers {
-		encodedArea, err := g.Logic.GetUpdateForPLayer(networkPlayer.Player)
+		g.updateBuffer.Reset()
+
+		err := g.Logic.WriteStateForPlayer(networkPlayer.PlayerID, &g.updateBuffer)
 		if err != nil {
-			// either player not found or area can't be encoded
+			// for now just remove errored players.
+			// TODO: Add proper error handling, in some cases we just need to skip the update tick.
 			fmt.Printf("can't get player update: %v. removing...\n", err)
 			delete(g.networkPlayers, networkPlayer.Addr.String())
 			continue
-		}
-
-		g.updateBuffer.Reset()
-		err = encodedArea.Encode(&g.updateBuffer)
-		if err != nil {
-			fmt.Printf("can't encode player update: %v\n", err)
 		}
 
 		g.conn.SetWriteDeadline(time.Now().Add(80 * time.Millisecond))
@@ -68,8 +77,10 @@ func (g *GameServer) updatePlayers() {
 	}
 }
 
+const serverTick = 80 * time.Millisecond
+
 func (g *GameServer) Run() {
-	ticker := time.NewTicker(150 * time.Millisecond)
+	ticker := time.NewTicker(serverTick)
 	defer ticker.Stop()
 	statTicker := time.NewTicker(2 * time.Second)
 	defer statTicker.Stop()
@@ -77,7 +88,7 @@ func (g *GameServer) Run() {
 	for {
 		select {
 		case <-ticker.C:
-			g.Logic.update()
+			g.Logic.UpdateState()
 			g.updatePlayers()
 
 		case <-statTicker.C:
@@ -87,19 +98,8 @@ func (g *GameServer) Run() {
 }
 
 func (g *GameServer) HandlePlayerConnection(conn *net.UDPConn, data *bytes.Buffer, clientAddr *net.UDPAddr) {
-	networkPlayer, ok := g.networkPlayers[clientAddr.String()]
-	if !ok {
-		log.Printf("new player connecting: %s", clientAddr.String())
-		player, err := g.Logic.AddPlayer()
-		if err != nil {
-			fmt.Printf("can't add new player: %v\n", err)
-			return
-		}
-		g.networkPlayers[clientAddr.String()] = NetworkPlayer{
-			Player: player,
-			Addr:   clientAddr,
-		}
-	}
+	g.serverLock.Lock()
+	defer g.serverLock.Unlock()
 
 	decoder := gob.NewDecoder(data)
 	var playerDirection entities.SnakeDirection
@@ -108,7 +108,21 @@ func (g *GameServer) HandlePlayerConnection(conn *net.UDPConn, data *bytes.Buffe
 		return
 	}
 
-	log.Printf("setting player %s direction to %d", clientAddr.String(), playerDirection)
-	g.Logic.SetPlayerDirection(networkPlayer.Player, playerDirection)
+	networkPlayer, ok := g.networkPlayers[clientAddr.String()]
+	if !ok {
+		log.Printf("new player connecting: %s", clientAddr.String())
+		playerID, err := g.Logic.AddPlayer(playerDirection)
 
+		if err != nil {
+			fmt.Printf("can't add new player: %v\n", err)
+			return
+		}
+		g.networkPlayers[clientAddr.String()] = NetworkPlayer{
+			PlayerID: playerID,
+			Addr:     clientAddr,
+		}
+		return
+	}
+
+	g.Logic.SetPlayerDirection(networkPlayer.PlayerID, playerDirection)
 }

@@ -26,7 +26,7 @@ func EraseScreen(w io.Writer) {
 	fmt.Fprintf(w, "%c[2J", Esc)
 }
 
-func Erase(w io.Writer, line, column int) {
+func Erase(w io.Writer, line, column int16) {
 	MoveCursor(w, line, column)
 	fmt.Fprint(w, " ")
 }

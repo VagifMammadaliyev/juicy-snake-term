@@ -5,14 +5,18 @@ package engine
 
 import (
 	"io"
-	"slices"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
+const (
+	DefaultCameraOffsetCols = 21
+	DefaultCameraOffsetRows = 11
+)
+
 type CenteredCamera struct {
-	OffsetCols int
-	OffsetRows int
+	OffsetCols int16
+	OffsetRows int16
 	Pivot      Point
 }
 
@@ -23,11 +27,8 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	offsetCols := camera.OffsetCols
 	offsetRows := camera.OffsetRows
 
-	// for even cols and rows, center will be a little bit off
-	// but that's OK, let's just cope with it, or just set [Area] cols and rows to odd numbers
-	// so we actually can get the center
-	// centerX := a.Cols / 2
-	// centerY := a.Rows / 2
+	// center of the camera is whatever offset we want, because
+	// it should be defined by camera settings
 	centerX := camera.OffsetCols
 	centerY := camera.OffsetRows
 
@@ -40,7 +41,7 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	offsetRowsError := 1 - a.Rows%2
 
 	var (
-		maxX, maxY, minX, minY int
+		maxX, maxY, minX, minY int16
 	)
 
 	// offset errors should be re-added to either side, not both
@@ -97,23 +98,25 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	}
 }
 
-// HACK
-func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offset int) []Cell {
-	visibleCells := make([]Cell, 0, len(ea.Cells))
+// RemoveInvisibleCells removes cells that should not render for given camera pivot and offsets.
+// Recommended to [Area.Clone] the area before calling, so original area state is not lost.
+func (a *Area) RemoveInvisibleCells(pivot Point, offsetX, offsetY int16) {
+	visibleCells := make([]Bounder, 0, len(a.Bounders))
 
-	maxX := pivot.X + offset
-	maxY := pivot.Y + offset
-	minX := pivot.X - offset
-	minY := pivot.Y - offset
+	maxX := pivot.X + offsetX
+	maxY := pivot.Y + offsetY
+	minX := pivot.X - offsetX
+	minY := pivot.Y - offsetY
 
-	for _, c := range ea.Cells {
+	for _, bounders := range a.Bounders {
+		c := bounders.Bounds()
 		if c.X <= maxX && c.X > minX &&
 			c.Y <= maxY && c.Y > minY {
 			visibleCells = append(visibleCells, c)
 		}
 	}
 
-	oldCells := slices.Clone(ea.Cells)
-	ea.Cells = visibleCells
-	return oldCells
+	a.Bounders = visibleCells
+	a.Cols = offsetX*2 + 1
+	a.Rows = offsetY*2 + 1
 }

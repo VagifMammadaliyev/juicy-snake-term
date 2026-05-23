@@ -1,8 +1,9 @@
 package entities
 
 import (
+	"fmt"
+
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
-	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
 type SnakeNode struct {
@@ -13,9 +14,9 @@ func (sn *SnakeNode) Bounds() engine.Cell {
 	return sn.Cell
 }
 
-func newSnakeNode(x, y int) *SnakeNode {
+func newSnakeNode(x, y int16) *SnakeNode {
 	return &SnakeNode{
-		Cell: engine.NewCell(x, y, terminal.Green),
+		Cell: engine.NewCell(x, y, SnakeColor),
 	}
 }
 
@@ -29,24 +30,51 @@ const (
 )
 
 type Snake struct {
-	Nodes           []*SnakeNode // this should be private
+	nodes           []*SnakeNode
+	Bounders        []engine.Bounder // bounders for public use, instead of exposing nodes
 	direction       SnakeDirection
 	queuedDirection SnakeDirection
 }
 
-func NewSnake(length int, x, y int) *Snake {
+func NewSnake(length int16, x, y int16) *Snake {
 	if length == 0 {
 		length = 1
 	}
 	nodes := make([]*SnakeNode, 0, length)
+	bounders := make([]engine.Bounder, 0, length)
+
 	for i := range length {
-		nodes = append(nodes, newSnakeNode(x+i, y))
+		node := newSnakeNode(x+i, y)
+		nodes = append(nodes, node)
+		bounders = append(bounders, node)
 	}
 
 	return &Snake{
-		Nodes:           nodes,
+		nodes:           nodes,
+		Bounders:        bounders,
 		direction:       Left,
 		queuedDirection: Left,
+	}
+}
+
+func NewSnakeWithDirection(length int16, x, y int16, direction SnakeDirection) *Snake {
+	if length == 0 {
+		length = 1
+	}
+	nodes := make([]*SnakeNode, 0, length)
+	bounders := make([]engine.Bounder, 0, length)
+
+	for i := range length {
+		node := newSnakeNode(x+i, y)
+		nodes = append(nodes, node)
+		bounders = append(bounders, node)
+	}
+
+	return &Snake{
+		nodes:           nodes,
+		Bounders:        bounders,
+		direction:       direction,
+		queuedDirection: direction,
 	}
 }
 
@@ -85,15 +113,15 @@ func (s *Snake) Move() {
 	}
 }
 
-func (s *Snake) moveNodes(xdelta, ydelta int) {
+func (s *Snake) moveNodes(xdelta, ydelta int16) {
 	var (
-		prevX    int
-		prevY    int
-		currentX int
-		currentY int
+		prevX    int16
+		prevY    int16
+		currentX int16
+		currentY int16
 	)
 
-	for i, node := range s.Nodes {
+	for i, node := range s.nodes {
 		cell := &node.Cell
 		currentX, currentY = cell.X, cell.Y
 		if i == 0 {
@@ -108,11 +136,36 @@ func (s *Snake) moveNodes(xdelta, ydelta int) {
 }
 
 func (s *Snake) Grow() {
-	lastNode := s.Nodes[len(s.Nodes)-1]
+	lastNode := s.nodes[len(s.nodes)-1]
 	newNode := newSnakeNode(lastNode.X, lastNode.Y)
-	s.Nodes = append(s.Nodes, newNode)
+	s.nodes = append(s.nodes, newNode)
+	s.Bounders = append(s.Bounders, newNode)
+	fmt.Printf("snake grew. nodes len: %d, bounders len: %d\n", len(s.nodes), len(s.Bounders))
 }
 
 func (s *Snake) Head() *SnakeNode {
-	return s.Nodes[0]
+	return s.nodes[0]
+}
+
+func (s *Snake) Collides(anotherSnake *Snake) bool {
+	head := s.Head()
+	for _, node := range anotherSnake.nodes {
+		if engine.Collides(head, node) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Snake) CollidesWithItself() bool {
+	head := s.Head()
+	for i, node := range s.nodes {
+		if i == 0 {
+			continue
+		}
+		if engine.Collides(head, node) {
+			return true
+		}
+	}
+	return false
 }

@@ -2,16 +2,15 @@ package entities
 
 import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
-	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
 type Brick struct {
 	engine.Cell
 }
 
-func NewBrick(x, y int) *Brick {
+func NewBrick(x, y int16) *Brick {
 	return &Brick{
-		Cell: engine.NewCell(x, y, terminal.Red),
+		Cell: engine.NewCell(x, y, BrickColor),
 	}
 }
 
