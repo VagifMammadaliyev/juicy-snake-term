@@ -71,7 +71,6 @@ func (g *GameServer) updatePlayers() {
 		}
 
 		g.conn.SetWriteDeadline(time.Now().Add(80 * time.Millisecond))
-		fmt.Printf("player update size for %s: %d bytes\n", networkPlayer.Addr.String(), g.updateBuffer.Len())
 		_, err = g.conn.WriteToUDP(g.updateBuffer.Bytes(), networkPlayer.Addr)
 
 		if err != nil {
@@ -129,6 +128,5 @@ func (g *GameServer) HandlePlayerConnection(conn *net.UDPConn, data *bytes.Buffe
 		return
 	}
 
-	log.Printf("setting player %s direction to %d", clientAddr.String(), playerDirection)
 	g.Logic.SetPlayerDirection(networkPlayer.PlayerID, playerDirection)
 }

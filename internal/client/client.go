@@ -104,7 +104,7 @@ func (g *GameClient) listenServer(done chan struct{}) {
 		area.RenderForCamera(g.screen, camera)
 
 		terminal.MoveCursor(g.screen, area.Rows+1, 0)
-		fmt.Fprintf(g.screen, "Bytes received: %10d\n\r", n)
+		fmt.Fprintf(g.screen, "Bytes received: %5d\n\r", n)
 		fmt.Fprintf(g.screen, "Area size: %2dx%2d\n\r", area.Cols, area.Rows)
 		fmt.Fprintf(g.screen, "Bounders: %4d\n\r", len(area.Bounders))
 		fmt.Fprintf(g.screen, "Per bounder: %4.2f bytes\n\r", float64(n)/float64(len(area.Bounders)))
