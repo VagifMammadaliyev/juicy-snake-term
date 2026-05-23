@@ -8,36 +8,15 @@ import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
-type EncodedArea struct {
-	Point
-	Cols            int16
-	Rows            int16
-	Cells           []Cell
-	PlayerSnakeHead Point
-}
+// Encode encodes the [Area] and writes it to buff.
+func (a *Area) Encode(buff *bytes.Buffer, center Point) error {
+	b := make([]byte, 0, 4+len(a.Bounders)*5)
 
-func (a *Area) ToEncodedArea() *EncodedArea {
-	encodedArea := EncodedArea{
-		Point: a.Point,
-		Cols:  a.Cols,
-		Rows:  a.Rows,
-	}
+	b = binary.BigEndian.AppendUint16(b, uint16(center.X))
+	b = binary.BigEndian.AppendUint16(b, uint16(center.Y))
 
-	cells := make([]Cell, 0, len(a.Bounders))
-	for _, b := range a.Bounders {
-		cells = append(cells, b.Bounds())
-	}
-
-	encodedArea.Cells = cells
-	return &encodedArea
-}
-
-// Encode encodes the [EncodedArea]. It expects [PlayerSnakeHead] to be set.
-func (ea *EncodedArea) Encode(buff *bytes.Buffer) error {
-	b := make([]byte, 0)
-	b = binary.BigEndian.AppendUint16(b, uint16(ea.PlayerSnakeHead.X))
-	b = binary.BigEndian.AppendUint16(b, uint16(ea.PlayerSnakeHead.Y))
-	for _, c := range ea.Cells {
+	for _, bounder := range a.Bounders {
+		c := bounder.Bounds()
 		b = append(b, byte(c.BgColor))
 		b = binary.BigEndian.AppendUint16(b, uint16(c.X))
 		b = binary.BigEndian.AppendUint16(b, uint16(c.Y))
@@ -51,20 +30,22 @@ func (ea *EncodedArea) Encode(buff *bytes.Buffer) error {
 	return nil
 }
 
-func NewEncodedAreaFromBytes(data []byte) (*EncodedArea, error) {
+// NewAreaFromBytes creates a new [Area] from byte slice. It also returns center [Point]
+// which was set initially in [Area.Encode] method.
+func NewAreaFromBytes(data []byte) (*Area, Point, error) {
 	n := len(data)
 	if n < 4 { // 2 bytes + 2 bytes for PlayerSnakeHead (x,y)
-		return nil, fmt.Errorf("data too short to create EncodedArea: %d bytes", n)
+		return nil, Point{}, fmt.Errorf("data too short to create Area: %d bytes", n)
 	}
 
-	snakeHeadX := int16(binary.BigEndian.Uint16(data[0:2]))
-	snakeHeadY := int16(binary.BigEndian.Uint16(data[2:4]))
-	playerSnakeHead := Point{X: snakeHeadX, Y: snakeHeadY}
+	centerX := int16(binary.BigEndian.Uint16(data[0:2]))
+	centerY := int16(binary.BigEndian.Uint16(data[2:4]))
+	centerPoint := Point{X: centerX, Y: centerY}
 
 	cells := make([]Cell, 0, (n-4)/5) // each cell is 5 bytes (BgColor, X, Y)
 	for i := 4; i < n; i += 5 {
 		if i+2 >= n {
-			return nil, fmt.Errorf("incomplete cell data at index %d", i)
+			return nil, centerPoint, fmt.Errorf("incomplete cell data at index %d", i)
 		}
 		bgColor := terminal.Color(int16(data[i]))
 		x := int16(binary.BigEndian.Uint16(data[i+1 : i+3]))
@@ -80,25 +61,15 @@ func NewEncodedAreaFromBytes(data []byte) (*EncodedArea, error) {
 		})
 	}
 
-	return &EncodedArea{
-		Point:           Point{0, 0},
-		Cols:            DefaultCameraOffsetCols*2 + 1,
-		Rows:            DefaultCameraOffsetRows*2 + 1,
-		Cells:           cells,
-		PlayerSnakeHead: playerSnakeHead,
-	}, nil
-}
-
-func NewAreaFromEncodedArea(encodedArea *EncodedArea) *Area {
-	bounders := make([]Bounder, 0, len(encodedArea.Cells))
-	for _, cell := range encodedArea.Cells {
+	bounders := make([]Bounder, 0, len(cells))
+	for _, cell := range cells {
 		bounders = append(bounders, cell)
 	}
 
 	return &Area{
-		Point:    encodedArea.Point,
-		Cols:     encodedArea.Cols,
-		Rows:     encodedArea.Rows,
+		Point:    Point{0, 0},
+		Cols:     DefaultCameraOffsetCols*2 + 1,
+		Rows:     DefaultCameraOffsetRows*2 + 1,
 		Bounders: bounders,
-	}
+	}, centerPoint, nil
 }

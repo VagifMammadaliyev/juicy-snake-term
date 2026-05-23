@@ -83,13 +83,12 @@ func (g *GameClient) listenServer(done chan struct{}) {
 			tickDurations = tickDurations[1:]
 		}
 
-		ea, err := engine.NewEncodedAreaFromBytes(buffer[:n])
+		area, playerSnakeHead, err := engine.NewAreaFromBytes(buffer[:n])
 		if err != nil {
 			log.Printf("can't decode server update: %v\n", err)
 			continue
 		}
 
-		area := engine.NewAreaFromEncodedArea(ea)
 		for _, b := range area.Bounders {
 			if b == nil {
 				fmt.Println("received nil for bounder")
@@ -98,7 +97,7 @@ func (g *GameClient) listenServer(done chan struct{}) {
 		camera := engine.CenteredCamera{
 			OffsetCols: engine.DefaultCameraOffsetCols,
 			OffsetRows: engine.DefaultCameraOffsetRows,
-			Pivot:      ea.PlayerSnakeHead,
+			Pivot:      playerSnakeHead,
 		}
 
 		area.RenderForCamera(g.screen, camera)
@@ -108,7 +107,7 @@ func (g *GameClient) listenServer(done chan struct{}) {
 		fmt.Fprintf(g.screen, "Area size: %2dx%2d\n\r", area.Cols, area.Rows)
 		fmt.Fprintf(g.screen, "Bounders: %4d\n\r", len(area.Bounders))
 		fmt.Fprintf(g.screen, "Per bounder: %4.2f bytes\n\r", float64(n)/float64(len(area.Bounders)))
-		fmt.Fprintf(g.screen, "Player snake head: %2d,%2d\n\r", ea.PlayerSnakeHead.X, ea.PlayerSnakeHead.Y)
+		fmt.Fprintf(g.screen, "Player snake head: %2d,%2d\n\r", playerSnakeHead.X, playerSnakeHead.Y)
 
 		averageTickDuration := time.Duration(0)
 		for _, d := range tickDurations {

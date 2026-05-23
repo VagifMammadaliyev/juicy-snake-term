@@ -9,14 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/entities"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
 type Logic interface {
 	UpdateState()
-	GetStateForPlayer(playerID string) (*engine.EncodedArea, error)
+	WriteStateForPlayer(playerID string, buff *bytes.Buffer) error
 	AddPlayer(direction entities.SnakeDirection) (playerID string, err error)
 	SetPlayerDirection(playerID string, direction entities.SnakeDirection) error
 }
@@ -56,18 +55,15 @@ func (g *GameServer) updatePlayers() {
 	defer g.serverLock.Unlock()
 
 	for _, networkPlayer := range g.networkPlayers {
-		encodedArea, err := g.Logic.GetStateForPlayer(networkPlayer.PlayerID)
+		g.updateBuffer.Reset()
+
+		err := g.Logic.WriteStateForPlayer(networkPlayer.PlayerID, &g.updateBuffer)
 		if err != nil {
-			// either player not found or area can't be encoded
+			// for now just remove errored players.
+			// TODO: Add proper error handling, in some cases we just need to skip the update tick.
 			fmt.Printf("can't get player update: %v. removing...\n", err)
 			delete(g.networkPlayers, networkPlayer.Addr.String())
 			continue
-		}
-
-		g.updateBuffer.Reset()
-		err = encodedArea.Encode(&g.updateBuffer)
-		if err != nil {
-			fmt.Printf("can't encode player update: %v\n", err)
 		}
 
 		g.conn.SetWriteDeadline(time.Now().Add(80 * time.Millisecond))

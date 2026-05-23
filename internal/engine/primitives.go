@@ -1,6 +1,8 @@
 package engine
 
-import "github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
+import (
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
+)
 
 type Point struct {
 	X int16
@@ -32,7 +34,7 @@ func NewCell(x, y int16, color terminal.Color) Cell {
 
 // Bounds return the cell itself
 // this it to comply to [Bounder] interface
-// when constructing [Area] from [EncodedArea]
+// when constructing [Area] from network data.
 func (c Cell) Bounds() Cell {
 	return c
 }
@@ -49,12 +51,26 @@ type Area struct {
 }
 
 func NewArea(cols, rows int16) *Area {
+	estimatedCapWithExtra := int(cols)*2 + int(rows)*2 + int(cols)*int(rows)/10
+
 	return &Area{
 		Point:    Point{0, 0},
 		Cols:     cols,
 		Rows:     rows,
-		Bounders: make([]Bounder, 0),
+		Bounders: make([]Bounder, 0, estimatedCapWithExtra),
 	}
+}
+
+func (a *Area) Clone() *Area {
+	clone := &Area{
+		Point:    a.Point,
+		Cols:     a.Cols,
+		Rows:     a.Rows,
+		Bounders: make([]Bounder, len(a.Bounders)),
+	}
+
+	copy(clone.Bounders, a.Bounders)
+	return clone
 }
 
 type DebugCell struct {

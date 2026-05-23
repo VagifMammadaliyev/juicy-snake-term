@@ -98,23 +98,25 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	}
 }
 
-// HACK
-func (ea *EncodedArea) RemoveInvisibleCells(pivot Point, offsetX, offsetY int16) {
-	visibleCells := make([]Cell, 0, len(ea.Cells))
+// RemoveInvisibleCells removes cells that should not render for given camera pivot and offsets.
+// Recommended to [Area.Clone] the area before calling, so original area state is not lost.
+func (a *Area) RemoveInvisibleCells(pivot Point, offsetX, offsetY int16) {
+	visibleCells := make([]Bounder, 0, len(a.Bounders))
 
 	maxX := pivot.X + offsetX
 	maxY := pivot.Y + offsetY
 	minX := pivot.X - offsetX
 	minY := pivot.Y - offsetY
 
-	for _, c := range ea.Cells {
+	for _, bounders := range a.Bounders {
+		c := bounders.Bounds()
 		if c.X <= maxX && c.X > minX &&
 			c.Y <= maxY && c.Y > minY {
 			visibleCells = append(visibleCells, c)
 		}
 	}
 
-	ea.Cells = visibleCells
-	ea.Cols = offsetX*2 + 1
-	ea.Rows = offsetY*2 + 1
+	a.Bounders = visibleCells
+	a.Cols = offsetX*2 + 1
+	a.Rows = offsetY*2 + 1
 }

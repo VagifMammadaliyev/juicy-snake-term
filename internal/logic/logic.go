@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"bytes"
 	"fmt"
 
 	"sync"
@@ -56,6 +57,8 @@ func (l *Logic) addBricks() {
 	}
 }
 
+// addFood adds food until there is "foodCount" amount of food in the game.
+// foodCount value directly correlates with startup time of game server.
 func (l *Logic) addFood() {
 	for n := len(l.foods); n < foodCount; n++ {
 		randomPoint, err := l.area.GetRandomFreePoint()
@@ -155,22 +158,34 @@ players:
 	}
 }
 
-func (l *Logic) GetStateForPlayer(id string) (*engine.EncodedArea, error) {
+func (l *Logic) WriteStateForPlayer(id string, buff *bytes.Buffer) error {
 	l.updateLock.Lock()
 	defer l.updateLock.Unlock()
 
 	player, ok := l.players[id]
 	if !ok {
-		return nil, fmt.Errorf("player not found: %s", id)
+		return fmt.Errorf("player not found: %s", id)
 	}
 
 	snakeHead := player.Snake.Head()
 
-	encodedArea := l.area.ToEncodedArea()
-	encodedArea.PlayerSnakeHead = snakeHead.Point
-	encodedArea.RemoveInvisibleCells(snakeHead.Point, 21, 11)
+	// the clone method recreates the bounders.
+	// in this case case we might actually don't recreate just change
+	// the reference to the slice itself, while original slice is kept with [Logic] struct.
+	// this can be a good performance gainer, if we happen to have a lot of bounders.
+	clonedArea := l.area.Clone()
+	clonedArea.RemoveInvisibleCells(
+		snakeHead.Point,
+		engine.DefaultCameraOffsetCols,
+		engine.DefaultCameraOffsetRows,
+	)
 
-	return encodedArea, nil
+	err := clonedArea.Encode(buff, snakeHead.Point)
+	if err != nil {
+		return fmt.Errorf("can't encode area: %w", err)
+	}
+
+	return nil
 }
 
 func (l *Logic) AddPlayer(direction entities.SnakeDirection) (string, error) {
