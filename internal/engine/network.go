@@ -9,11 +9,10 @@ import (
 )
 
 // Encode encodes the [Area] and writes it to buff.
-func (a *Area) Encode(buff *bytes.Buffer, center Point) error {
+func (a *Area) Encode(buff *bytes.Buffer) error {
 	b := make([]byte, 0, 4+len(a.Bounders)*5)
-
-	b = binary.BigEndian.AppendUint16(b, uint16(center.X))
-	b = binary.BigEndian.AppendUint16(b, uint16(center.Y))
+	b = binary.BigEndian.AppendUint16(b, uint16(a.cameraCenter.X))
+	b = binary.BigEndian.AppendUint16(b, uint16(a.cameraCenter.Y))
 
 	for _, bounder := range a.Bounders {
 		c := bounder.Bounds()

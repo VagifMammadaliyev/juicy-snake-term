@@ -8,6 +8,7 @@ import (
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/entities"
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/messages"
 	"github.com/google/uuid"
 )
 
@@ -174,9 +175,11 @@ func (l *Logic) WriteStateForPlayer(id string, buff *bytes.Buffer) error {
 	// the reference to the slice itself, while original slice is kept with [Logic] struct.
 	// this can be a good performance gainer, if we happen to have a lot of bounders.
 	clonedArea := l.area.Clone()
-	clonedArea.RemoveInvisibleCells(snakeHead.Point)
+	clonedArea.PrepareForCamera(snakeHead.Point)
 
-	err := clonedArea.Encode(buff, snakeHead.Point)
+	buff.WriteByte(byte(messages.MsgTypeAreaUpdate))
+
+	err := clonedArea.Encode(buff)
 	if err != nil {
 		return fmt.Errorf("can't encode area: %w", err)
 	}

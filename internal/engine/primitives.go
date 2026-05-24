@@ -60,6 +60,8 @@ type Area struct {
 	Cols     int16
 	Rows     int16
 	Bounders []Bounder
+
+	cameraCenter Point
 }
 
 func NewArea(cols, rows int16) *Area {
