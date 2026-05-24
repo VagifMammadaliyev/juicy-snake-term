@@ -32,8 +32,15 @@ const (
 	foodCount         = 10000
 )
 
-func NewLogic() *Logic {
-	area := engine.NewArea(maxSquareAreaCols, maxSquareAreaRows)
+func NewLogicWithMaxArea() *Logic {
+	return NewLogic(maxSquareAreaCols, maxSquareAreaRows)
+}
+
+func NewLogic(areaCols, areaRows int16) *Logic {
+	areaCols = min(areaCols, maxSquareAreaCols)
+	areaRows = min(areaRows, maxSquareAreaRows)
+
+	area := engine.NewArea(areaCols, areaRows)
 
 	logic := &Logic{
 		area:    area,
@@ -195,8 +202,13 @@ func (l *Logic) AddPlayer(direction entities.SnakeDirection) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("can't add player: %w", err)
 	}
+
+	return l.addPlayerInCoords(direction, freePoint.X, freePoint.Y)
+}
+
+func (l *Logic) addPlayerInCoords(direction entities.SnakeDirection, x, y int16) (string, error) {
 	player := Player{
-		Snake: entities.NewSnakeWithDirection(1, freePoint.X, freePoint.Y, direction),
+		Snake: entities.NewSnakeWithDirection(1, x, y, direction),
 	}
 	id := uuid.NewString()
 	l.players[id] = player
