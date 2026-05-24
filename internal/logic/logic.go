@@ -202,8 +202,13 @@ func (l *Logic) AddPlayer(direction entities.SnakeDirection) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("can't add player: %w", err)
 	}
+
+	return l.addPlayerInCoords(direction, freePoint.X, freePoint.Y)
+}
+
+func (l *Logic) addPlayerInCoords(direction entities.SnakeDirection, x, y int16) (string, error) {
 	player := Player{
-		Snake: entities.NewSnakeWithDirection(1, freePoint.X, freePoint.Y, direction),
+		Snake: entities.NewSnakeWithDirection(1, x, y, direction),
 	}
 	id := uuid.NewString()
 	l.players[id] = player
