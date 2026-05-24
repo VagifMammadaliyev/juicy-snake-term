@@ -56,8 +56,8 @@ func NewAreaFromBytes(data []byte) (*Area, Point, error) {
 			BgColor: bgColor,
 			FgColor: bgColor,
 			Symbol:  ' ',
-			Height:  DefaultHeight,
-			Width:   DefaultWidth,
+			Height:  CellHeight,
+			Width:   CellWidth,
 		})
 	}
 
