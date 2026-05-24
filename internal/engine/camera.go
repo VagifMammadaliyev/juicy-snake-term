@@ -1,8 +1,5 @@
 package engine
 
-// The code written in this file works by luck honestly, I promise I will go back and check.
-// How I made it work: Just changed + to -, - to +, > to >= and so on until visually it seems correct.
-
 import (
 	"io"
 
@@ -28,8 +25,6 @@ func NewCenteredCamera(pivot Point) CenteredCamera {
 	}
 }
 
-// TODO: this function has some bugs, very hard to find bugs, find and fix them :(
-// but on surface if [CenteredCamera]'s offsets are correctly set it works...
 func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	terminal.EraseScreen(w)
 	offsetCols := camera.OffsetCols
@@ -76,7 +71,7 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	// we need to shift area a little bit so we can draw nice
 	// boundary of the camera view
 	areaOffsetPoint := Point{
-		X: a.Point.X - 1, // why subtract, WHYY??
+		X: a.Point.X - 1,
 		Y: a.Point.Y - 1,
 	}
 
@@ -85,9 +80,6 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 		if cell.X <= maxX && cell.X > minX &&
 			cell.Y <= maxY && cell.Y > minY {
 			// this cell should be visible, apply the diff and render.
-			// p.s. for some reason i need to add here, not subtract
-			//      although i think i should subtract, but its 2AM so
-			//      it works and and that's it
 			cell.X += diffX
 			cell.Y += diffY
 			cell.render(w, areaOffsetPoint)
