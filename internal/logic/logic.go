@@ -174,11 +174,7 @@ func (l *Logic) WriteStateForPlayer(id string, buff *bytes.Buffer) error {
 	// the reference to the slice itself, while original slice is kept with [Logic] struct.
 	// this can be a good performance gainer, if we happen to have a lot of bounders.
 	clonedArea := l.area.Clone()
-	clonedArea.RemoveInvisibleCells(
-		snakeHead.Point,
-		engine.DefaultCameraOffsetCols,
-		engine.DefaultCameraOffsetRows,
-	)
+	clonedArea.RemoveInvisibleCells(snakeHead.Point)
 
 	err := clonedArea.Encode(buff, snakeHead.Point)
 	if err != nil {

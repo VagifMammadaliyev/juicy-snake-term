@@ -68,8 +68,8 @@ func NewAreaFromBytes(data []byte) (*Area, Point, error) {
 
 	return &Area{
 		Point:    Point{0, 0},
-		Cols:     DefaultCameraOffsetCols*2 + 1,
-		Rows:     DefaultCameraOffsetRows*2 + 1,
+		Cols:     cameraOffsetCols*2 + 1,
+		Rows:     cameraOffsetRows*2 + 1,
 		Bounders: bounders,
 	}, centerPoint, nil
 }
