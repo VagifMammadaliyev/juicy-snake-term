@@ -32,8 +32,15 @@ const (
 	foodCount         = 10000
 )
 
-func NewLogic() *Logic {
-	area := engine.NewArea(maxSquareAreaCols, maxSquareAreaRows)
+func NewLogicWithMaxArea() *Logic {
+	return NewLogic(maxSquareAreaCols, maxSquareAreaRows)
+}
+
+func NewLogic(areaCols, areaRows int16) *Logic {
+	areaCols = min(areaCols, maxSquareAreaCols)
+	areaRows = min(areaRows, maxSquareAreaRows)
+
+	area := engine.NewArea(areaCols, areaRows)
 
 	logic := &Logic{
 		area:    area,

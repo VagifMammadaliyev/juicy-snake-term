@@ -32,7 +32,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	logic := logic.NewLogic()
+	logic := logic.NewLogicWithMaxArea()
 	gameServer := server.NewGameServer(conn, logic)
 	go gameServer.Run()
 
