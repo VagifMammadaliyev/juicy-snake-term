@@ -15,7 +15,7 @@ type Cell struct {
 	Width   int16
 	FgColor terminal.Color
 	BgColor terminal.Color
-	Symbol  rune
+	Symbol  [2]rune // the length should be equal to [cellWidth]
 }
 
 const (
@@ -33,8 +33,15 @@ func NewCell(x, y int16, color terminal.Color) Cell {
 		Width:   cellWidth,
 		FgColor: color,
 		BgColor: color,
-		Symbol:  ' ',
+		Symbol:  [2]rune{' ', ' '},
 	}
+}
+
+func NewCellWithSymbol(x, y int16, color terminal.Color, symbol [2]rune) Cell {
+	cell := NewCell(x, y, color)
+
+	cell.Symbol = symbol
+	return cell
 }
 
 // Bounds return the cell itself
@@ -93,7 +100,7 @@ func NewDebugCell(x, y int16) DebugCell {
 			Width:   cellWidth,
 			FgColor: terminal.Black,
 			BgColor: terminal.Black,
-			Symbol:  '-',
+			Symbol:  [2]rune{'-', '-'},
 		},
 	}
 }

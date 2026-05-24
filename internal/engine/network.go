@@ -51,14 +51,7 @@ func NewAreaFromBytes(data []byte) (*Area, Point, error) {
 		x := int16(binary.BigEndian.Uint16(data[i+1 : i+3]))
 		y := int16(binary.BigEndian.Uint16(data[i+3 : i+5]))
 
-		cells = append(cells, Cell{
-			Point:   Point{X: x, Y: y},
-			BgColor: bgColor,
-			FgColor: bgColor,
-			Symbol:  ' ',
-			Height:  cellHeight,
-			Width:   cellWidth,
-		})
+		cells = append(cells, NewCell(x, y, bgColor))
 	}
 
 	bounders := make([]Bounder, 0, len(cells))
