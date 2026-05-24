@@ -8,6 +8,7 @@ import (
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/entities"
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/messages"
 	"github.com/google/uuid"
 )
 
@@ -175,6 +176,8 @@ func (l *Logic) WriteStateForPlayer(id string, buff *bytes.Buffer) error {
 	// this can be a good performance gainer, if we happen to have a lot of bounders.
 	clonedArea := l.area.Clone()
 	clonedArea.PrepareForCamera(snakeHead.Point)
+
+	buff.WriteByte(byte(messages.MsgTypeAreaUpdate))
 
 	err := clonedArea.Encode(buff)
 	if err != nil {

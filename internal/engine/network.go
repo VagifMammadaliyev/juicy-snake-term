@@ -5,14 +5,12 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/VagifMammadaliyev/juicy-snake-term/internal/messages"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
 // Encode encodes the [Area] and writes it to buff.
 func (a *Area) Encode(buff *bytes.Buffer) error {
-	b := make([]byte, 0, 5+len(a.Bounders)*5)
-	b = append(b, byte(messages.MsgTypeAreaUpdate))
+	b := make([]byte, 0, 4+len(a.Bounders)*5)
 	b = binary.BigEndian.AppendUint16(b, uint16(a.cameraCenter.X))
 	b = binary.BigEndian.AppendUint16(b, uint16(a.cameraCenter.Y))
 
