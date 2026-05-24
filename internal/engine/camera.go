@@ -25,6 +25,13 @@ func NewCenteredCamera(pivot Point) CenteredCamera {
 	}
 }
 
+// setCameraCenter sets the center of the camera to the given pivot point.
+// This method allows set center for specific player.
+// This method should be called on cloned area, so other players can have different camera centers.
+func (a *Area) setCameraCenter(pivot Point) {
+	a.cameraCenter = pivot
+}
+
 func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	terminal.EraseScreen(w)
 	offsetCols := camera.OffsetCols
@@ -98,9 +105,9 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 	}
 }
 
-// RemoveInvisibleCells removes cells that should not render for given camera pivot and offsets.
+// removeInvisibleCells removes cells that should not render for given camera pivot and offsets.
 // Recommended to [Area.Clone] the area before calling, so original area state is not lost.
-func (a *Area) RemoveInvisibleCells(pivot Point) {
+func (a *Area) removeInvisibleCells(pivot Point) {
 	visibleCells := make([]Bounder, 0, len(a.Bounders))
 
 	maxX := pivot.X + cameraOffsetCols
@@ -119,4 +126,11 @@ func (a *Area) RemoveInvisibleCells(pivot Point) {
 	a.Bounders = visibleCells
 	a.Cols = cameraOffsetCols*2 + 1
 	a.Rows = cameraOffsetRows*2 + 1
+}
+
+// PrepareForCamera prepares area to be encoded for a sprific player,
+// given the snake head of that player.
+func (a *Area) PrepareForCamera(snakeHead Point) {
+	a.removeInvisibleCells(snakeHead)
+	a.setCameraCenter(snakeHead)
 }
