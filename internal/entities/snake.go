@@ -16,7 +16,7 @@ func (sn *SnakeNode) Bounds() engine.Cell {
 
 func newSnakeNode(x, y int16) *SnakeNode {
 	return &SnakeNode{
-		Cell: engine.NewCell(x, y, SnakeColor),
+		Cell: engine.NewCell(x, y, snakeColor),
 	}
 }
 

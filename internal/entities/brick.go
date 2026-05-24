@@ -10,7 +10,7 @@ type Brick struct {
 
 func NewBrick(x, y int16) *Brick {
 	return &Brick{
-		Cell: engine.NewCell(x, y, BrickColor),
+		Cell: engine.NewCell(x, y, brickColor),
 	}
 }
 
