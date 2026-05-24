@@ -9,7 +9,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/VagifMammadaliyev/juicy-snake-term/internal/engine"
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/messages"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 )
 
@@ -83,27 +83,11 @@ func (g *GameClient) listenServer(done chan struct{}) {
 			tickDurations = tickDurations[1:]
 		}
 
-		area, playerSnakeHead, err := engine.NewAreaFromBytes(buffer[:n])
+		err = messages.HandleMessage(g.screen, buffer[:n])
 		if err != nil {
-			log.Printf("can't decode server update: %v\n", err)
+			log.Printf("can't handle server message: %v\n", err)
 			continue
 		}
-
-		for _, b := range area.Bounders {
-			if b == nil {
-				fmt.Println("received nil for bounder")
-			}
-		}
-		camera := engine.NewCenteredCamera(playerSnakeHead)
-
-		area.RenderForCamera(g.screen, camera)
-
-		terminal.MoveCursor(g.screen, area.Rows+1, 0)
-		fmt.Fprintf(g.screen, "Bytes received: %5d\n\r", n)
-		fmt.Fprintf(g.screen, "Area size: %2dx%2d\n\r", area.Cols, area.Rows)
-		fmt.Fprintf(g.screen, "Bounders: %4d\n\r", len(area.Bounders))
-		fmt.Fprintf(g.screen, "Per bounder: %4.2f bytes\n\r", float64(n)/float64(len(area.Bounders)))
-		fmt.Fprintf(g.screen, "Player snake head: %2d,%2d\n\r", playerSnakeHead.X, playerSnakeHead.Y)
 
 		averageTickDuration := time.Duration(0)
 		for _, d := range tickDurations {
