@@ -28,7 +28,7 @@ type Logic struct {
 const (
 	maxSquareAreaCols = 8191
 	maxSquareAreaRows = 8191
-	foodCount         = 70000
+	foodCount         = 10000
 )
 
 func NewLogic() *Logic {

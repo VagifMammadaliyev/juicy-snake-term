@@ -51,7 +51,7 @@ func (c Cell) render(w io.Writer, offset Point) {
 	for y := int16(0); y < c.Height; y++ {
 		for x := int16(0); x < c.Width; x++ {
 			terminal.MoveCursor(w, point.Y+y, point.X+x)
-			fmt.Fprintf(w, "%c", c.Symbol)
+			fmt.Fprintf(w, "%c", c.Symbol[x])
 		}
 	}
 }
