@@ -18,14 +18,19 @@ type Cell struct {
 	Symbol  rune
 }
 
+const (
+	cellHeight int16 = 1
+	cellWidth  int16 = 2
+)
+
 func NewCell(x, y int16, color terminal.Color) Cell {
 	return Cell{
 		Point: Point{
 			X: x,
 			Y: y,
 		},
-		Height:  CellHeight,
-		Width:   CellWidth,
+		Height:  cellHeight,
+		Width:   cellWidth,
 		FgColor: color,
 		BgColor: color,
 		Symbol:  ' ',
@@ -84,8 +89,8 @@ func NewDebugCell(x, y int16) DebugCell {
 				X: x,
 				Y: y,
 			},
-			Height:  CellHeight,
-			Width:   CellWidth,
+			Height:  cellHeight,
+			Width:   cellWidth,
 			FgColor: terminal.Black,
 			BgColor: terminal.Black,
 			Symbol:  '-',

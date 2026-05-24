@@ -36,8 +36,8 @@ func (a *Area) Reset(w io.Writer, b Bounder) {
 func startPoint(c Cell, offset Point) Point {
 	startX, startY := c.X*c.Width+1, c.Y*c.Height+1
 	return Point{
-		X: startX + offset.X*CellWidth,
-		Y: startY + offset.Y*CellHeight,
+		X: startX + offset.X*cellWidth,
+		Y: startY + offset.Y*cellHeight,
 	}
 }
 
