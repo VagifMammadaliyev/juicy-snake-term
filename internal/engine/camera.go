@@ -10,14 +10,22 @@ import (
 )
 
 const (
-	DefaultCameraOffsetCols = 21
-	DefaultCameraOffsetRows = 11
+	cameraOffsetCols = 21
+	cameraOffsetRows = 11
 )
 
 type CenteredCamera struct {
 	OffsetCols int16
 	OffsetRows int16
 	Pivot      Point
+}
+
+func NewCenteredCamera(pivot Point) CenteredCamera {
+	return CenteredCamera{
+		OffsetCols: cameraOffsetCols,
+		OffsetRows: cameraOffsetRows,
+		Pivot:      pivot,
+	}
 }
 
 // TODO: this function has some bugs, very hard to find bugs, find and fix them :(
@@ -100,13 +108,13 @@ func (a *Area) RenderForCamera(w io.Writer, camera CenteredCamera) {
 
 // RemoveInvisibleCells removes cells that should not render for given camera pivot and offsets.
 // Recommended to [Area.Clone] the area before calling, so original area state is not lost.
-func (a *Area) RemoveInvisibleCells(pivot Point, offsetX, offsetY int16) {
+func (a *Area) RemoveInvisibleCells(pivot Point) {
 	visibleCells := make([]Bounder, 0, len(a.Bounders))
 
-	maxX := pivot.X + offsetX
-	maxY := pivot.Y + offsetY
-	minX := pivot.X - offsetX
-	minY := pivot.Y - offsetY
+	maxX := pivot.X + cameraOffsetCols
+	maxY := pivot.Y + cameraOffsetRows
+	minX := pivot.X - cameraOffsetCols
+	minY := pivot.Y - cameraOffsetRows
 
 	for _, bounders := range a.Bounders {
 		c := bounders.Bounds()
@@ -117,6 +125,6 @@ func (a *Area) RemoveInvisibleCells(pivot Point, offsetX, offsetY int16) {
 	}
 
 	a.Bounders = visibleCells
-	a.Cols = offsetX*2 + 1
-	a.Rows = offsetY*2 + 1
+	a.Cols = cameraOffsetCols*2 + 1
+	a.Rows = cameraOffsetRows*2 + 1
 }

@@ -10,7 +10,7 @@ type Food struct {
 
 func NewFood(x, y int16) *Food {
 	return &Food{
-		Cell: engine.NewCell(x, y, FoodColor),
+		Cell: engine.NewCell(x, y, foodColor),
 	}
 }
 

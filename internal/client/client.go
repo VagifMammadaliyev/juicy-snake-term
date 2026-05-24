@@ -94,11 +94,7 @@ func (g *GameClient) listenServer(done chan struct{}) {
 				fmt.Println("received nil for bounder")
 			}
 		}
-		camera := engine.CenteredCamera{
-			OffsetCols: engine.DefaultCameraOffsetCols,
-			OffsetRows: engine.DefaultCameraOffsetRows,
-			Pivot:      playerSnakeHead,
-		}
+		camera := engine.NewCenteredCamera(playerSnakeHead)
 
 		area.RenderForCamera(g.screen, camera)
 

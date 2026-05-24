@@ -2,7 +2,6 @@ package engine
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
 )
 

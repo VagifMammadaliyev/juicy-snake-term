@@ -2,11 +2,13 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net"
 	"os"
 
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/client"
+	"github.com/VagifMammadaliyev/juicy-snake-term/internal/config"
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/terminal"
 	"golang.org/x/term"
 )
@@ -32,7 +34,8 @@ func main() {
 	// end prepare terminal
 
 	// connect to server
-	hostAddress := "localhost:8080"
+	conf := config.NewGameConfig()
+	hostAddress := fmt.Sprintf("%s:%d", conf.Server.Host, conf.Server.Port)
 	if len(os.Args) > 1 {
 		hostAddress = os.Args[1]
 	}
