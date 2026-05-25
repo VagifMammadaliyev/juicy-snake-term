@@ -1,1 +1,15 @@
-/bin
+bin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+go.work
+go.work.sum
+
+*.swp
+*.swo
+
+.DS_Store
+
