@@ -7,9 +7,31 @@ Multiplayer snake game to play directly in your terminal while you wait for agen
 - Go 1.26 or later (only required to build from source)
 - A terminal that supports ANSI escape sequences
 
-## Build
+## Download
 
-Build the server and the game client:
+Pre-built binaries for Linux, macOS, and Windows are attached to each tagged release on the [Releases page](https://github.com/VagifMammadaliyev/juicy-snake-term/releases/latest). Linux and macOS builds ship as `.tar.gz`, Windows builds as `.zip`.
+
+Pick the archive matching your OS and CPU architecture:
+
+- `juicy-snake-server-<os>-<arch>.tar.gz` / `.zip` — the server
+- `juicy-snake-game-<os>-<arch>.tar.gz` / `.zip` — the client
+
+For example, on a 64-bit Linux machine you want `juicy-snake-server-linux-amd64.tar.gz` and `juicy-snake-game-linux-amd64.tar.gz`. On Apple Silicon, use `darwin-arm64`.
+
+Extract the archives:
+
+```sh
+tar -xzf juicy-snake-server-linux-amd64.tar.gz
+tar -xzf juicy-snake-game-linux-amd64.tar.gz
+```
+
+On Windows, right-click the `.zip` and choose "Extract All", or run `Expand-Archive` in PowerShell.
+
+You'll get two binaries: `juicy-snake-server` and `juicy-snake-game` (with `.exe` suffix on Windows). The examples below use `./server` and `./game` for brevity — substitute the actual filename, or rename them.
+
+## Build from source
+
+Alternatively, build the server and the game client yourself:
 
 ```sh
 go build ./cmd/server

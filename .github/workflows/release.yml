@@ -29,14 +29,23 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Build
+      - name: Build and package
         run: |
-          ext=""
-          if [ "$GOOS" = "windows" ]; then ext=".exe"; fi
-          out="juicy-snake-${{ matrix.cmd }}-${GOOS}-${GOARCH}${ext}"
+          bin="juicy-snake-${{ matrix.cmd }}"
+          if [ "$GOOS" = "windows" ]; then bin="${bin}.exe"; fi
+          base="juicy-snake-${{ matrix.cmd }}-${GOOS}-${GOARCH}"
+
+          mkdir -p build dist
           go build -trimpath -ldflags="-s -w -X main.version=${GITHUB_REF_NAME}" \
-            -o "dist/${out}" ./cmd/${{ matrix.cmd }}
-          echo "ASSET=dist/${out}" >> "$GITHUB_ENV"
+            -o "build/${bin}" ./cmd/${{ matrix.cmd }}
+
+          if [ "$GOOS" = "windows" ]; then
+            (cd build && zip "../dist/${base}.zip" "${bin}")
+            echo "ASSET=dist/${base}.zip" >> "$GITHUB_ENV"
+          else
+            tar -czf "dist/${base}.tar.gz" -C build "${bin}"
+            echo "ASSET=dist/${base}.tar.gz" >> "$GITHUB_ENV"
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
