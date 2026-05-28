@@ -12,6 +12,8 @@ import (
 	"github.com/VagifMammadaliyev/juicy-snake-term/internal/server"
 )
 
+var version = "dev"
+
 func main() {
 	conf := config.NewGameConfig()
 	hostAddress := fmt.Sprintf("%s:%d", conf.Server.Host, conf.Server.Port)
