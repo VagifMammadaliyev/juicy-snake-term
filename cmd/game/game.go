@@ -13,6 +13,8 @@ import (
 	"golang.org/x/term"
 )
 
+var version = "dev"
+
 func main() {
 	// prepare terminal
 	defer os.Stdin.Close()

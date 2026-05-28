@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        cmd: [game, server]
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build and package
+        run: |
+          bin="juicy-snake-${{ matrix.cmd }}"
+          if [ "$GOOS" = "windows" ]; then bin="${bin}.exe"; fi
+          base="juicy-snake-${{ matrix.cmd }}-${GOOS}-${GOARCH}"
+
+          mkdir -p build dist
+          go build -trimpath -ldflags="-s -w -X main.version=${GITHUB_REF_NAME}" \
+            -o "build/${bin}" ./cmd/${{ matrix.cmd }}
+
+          if [ "$GOOS" = "windows" ]; then
+            (cd build && zip "../dist/${base}.zip" "${bin}")
+            echo "ASSET=dist/${base}.zip" >> "$GITHUB_ENV"
+          else
+            tar -czf "dist/${base}.tar.gz" -C build "${bin}"
+            echo "ASSET=dist/${base}.tar.gz" >> "$GITHUB_ENV"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: juicy-snake-${{ matrix.cmd }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.ASSET }}
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
