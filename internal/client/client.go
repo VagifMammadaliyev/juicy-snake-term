@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -17,20 +16,28 @@ const writeDeadline = 80 * time.Millisecond
 const maxServerBytes = 1024 // 1KB
 
 type GameClient struct {
-	conn     *net.UDPConn
-	screen   *bufio.Writer
 	Controls chan terminal.Control
+
+	conn   *net.UDPConn
+	screen *bufio.Writer
+	hud    hud
 }
 
 func NewGameClient(conn *net.UDPConn, buf *bufio.Writer) *GameClient {
-
 	game := &GameClient{
 		conn:     conn,
 		screen:   buf,
 		Controls: make(chan terminal.Control, 2),
+		hud:      hud{},
 	}
 
+	game.registerMessagleHandlers()
+
 	return game
+}
+
+func (g *GameClient) registerMessagleHandlers() {
+	messages.RegisterHandler(messages.MsgTypeAreaUpdate, newMsgHandler(areaUpdateHandler, &g.hud))
 }
 
 func (g *GameClient) sendControls(control terminal.Control) error {
@@ -66,10 +73,10 @@ func (g *GameClient) listenServer(done chan struct{}) {
 		n, _, err := g.conn.ReadFromUDP(buffer)
 
 		if err != nil {
-			// can't read from server
-			// let's just infinitely try to read in a loop,
-			// then we will handle timeouts and bla bla...
-			log.Printf("didn't receive anything from server: %v\n", err)
+			g.hud.errors = append(g.hud.errors, err)
+			g.hud.render(g.screen)
+
+			g.screen.Flush()
 
 			select {
 			case <-done:
@@ -85,7 +92,11 @@ func (g *GameClient) listenServer(done chan struct{}) {
 
 		err = messages.HandleMessage(g.screen, buffer[:n])
 		if err != nil {
-			log.Printf("can't handle server message: %v\n", err)
+			g.hud.errors = append(g.hud.errors, err)
+			g.hud.render(g.screen)
+
+			g.screen.Flush()
+
 			continue
 		}
 
@@ -95,7 +106,8 @@ func (g *GameClient) listenServer(done chan struct{}) {
 		}
 		averageTickDuration /= time.Duration(len(tickDurations))
 
-		fmt.Fprintf(g.screen, "Tick duration: %s\n\r", averageTickDuration)
+		g.hud.debug.tickDuration = averageTickDuration
+		g.hud.render(g.screen)
 
 		g.screen.Flush()
 	}
