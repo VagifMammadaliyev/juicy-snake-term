@@ -9,6 +9,13 @@ func MoveCursor(w io.Writer, line, column int16) {
 	fmt.Fprintf(w, "%c[%d;%dH", Esc, line, column)
 }
 
+func MoveCursorRight(w io.Writer, columns int16) {
+	if columns <= 0 {
+		return
+	}
+	fmt.Fprintf(w, "%c[%dC", Esc, columns)
+}
+
 func HideCursor(w io.Writer) {
 	fmt.Fprintf(w, "%c[?25l", Esc)
 }
